@@ -1,0 +1,607 @@
+/* ============================================================
+   SportShop - Panel de administración
+   Reutiliza los tokens de styles.css. Layout con sidebar fijo
+   en desktop y navegación superior en móvil.
+   ============================================================ */
+
+.admin {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* -------------------- Sidebar -------------------- */
+.admin-side {
+  width: 250px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.admin-side .logo {
+  padding: 6px 8px 18px;
+}
+.admin-side a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+.admin-side a svg {
+  width: 19px;
+  height: 19px;
+}
+.admin-side a:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.admin-side a.active {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.admin-side .spacer {
+  flex: 1;
+}
+
+/* -------------------- Contenido -------------------- */
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  padding: 22px;
+  padding-bottom: 80px;
+}
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.admin-topbar h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.admin-mobile-toggle {
+  display: none;
+}
+
+.admin-section {
+  display: none;
+}
+.admin-section.active {
+  display: block;
+  animation: fade-up 0.35s var(--ease) both;
+}
+
+/* -------------------- Tarjetas de estadística -------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.stat small {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.stat b {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+.stat .trend {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* -------------------- Tabla -------------------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-title {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+th,
+td {
+  text-align: left;
+  padding: 13px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+tbody tr:hover {
+  background: var(--surface-2);
+}
+.thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.pill.ok {
+  color: var(--accent);
+}
+.pill.low {
+  color: #f59e0b;
+}
+.pill.out {
+  color: var(--danger);
+}
+.row-actions {
+  display: flex;
+  gap: 6px;
+}
+.row-actions button {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transition: all 0.2s var(--ease);
+}
+.row-actions button:hover {
+  color: var(--text);
+  background: var(--surface-3);
+}
+.row-actions button svg {
+  width: 16px;
+  height: 16px;
+}
+.row-actions .del:hover {
+  color: var(--danger);
+}
+
+/* -------------------- Formulario -------------------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 18px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.field.full {
+  grid-column: 1 / -1;
+}
+.field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.field input,
+.field select,
+.field textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s var(--ease);
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+}
+.field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* Subida de imágenes (preparada para Firebase Storage) */
+.dropzone {
+  grid-column: 1 / -1;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 26px;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.dropzone:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+.dropzone svg {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 8px;
+  color: var(--text-dim);
+}
+.previews {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.previews img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 30;
+  display: none;
+}
+
+/* -------------------- Responsive -------------------- */
+@media (max-width: 860px) {
+  .admin-side {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.3s var(--ease);
+  }
+  .admin-side.open {
+    transform: translateX(0);
+  }
+  .admin-mobile-toggle {
+    display: grid;
+  }
+  .admin-overlay.open {
+    display: block;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   SNAKEONE Admin Enhancements
+   ============================================================ */
+
+.img-preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.img-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.img-preview-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
+.img-preview-remove:hover {
+  background: var(--danger);
+}
+
+.quick-size-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.quick-size-btn {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.quick-size-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.card-settings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 20px;
+}
+.card-settings h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-settings p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.badge-whatsapp {
+  background: rgba(37, 211, 102, 0.15);
+  color: #25d366;
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.badge-whatsapp svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.table-action-whatsapp {
+  background: #25d366 !important;
+  color: #041f0e !important;
+  border: none !important;
+}
+.table-action-whatsapp:hover {
+  background: #20ba5a !important;
+}
+
+
+/* ============================================================
+   ZENTRO Admin - Finanzas, Vendedores y Control de Pago
+   ============================================================ */
+
+.finance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.finance-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.finance-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+}
+.finance-card.profit::after {
+  background: #22c55e;
+}
+.finance-card.revenue::after {
+  background: #ff5500;
+}
+.finance-card.cost::after {
+  background: #f59e0b;
+}
+
+.finance-card small {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.finance-card b {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  margin-top: 8px;
+  letter-spacing: -0.02em;
+}
+.finance-card .sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.pill-profit {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  font-weight: 800;
+}
+
+.btn-pending-pay {
+  background: #f59e0b;
+  color: #1a1000;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  animation: pulse-amber 2s infinite;
+}
+.btn-pending-pay:hover {
+  background: #d97706;
+  color: #fff;
+}
+
+@keyframes pulse-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+}
+
+.seller-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.seller-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.seller-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.seller-card-head b {
+  font-size: 16px;
+  color: var(--text);
+}
+
+
+/* ============================================================
+   ZENTRO Admin - Pantalla de Bloqueo por PIN (Lock Screen)
+   ============================================================ */
+
+.lock-screen-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.25s ease-out;
+}
+.lock-screen-box {
+  background: #141414;
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+}
+.lock-pin-input {
+  width: 100%;
+  background: #1c1c1c;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.35em;
+  outline: none;
+  margin: 20px 0 16px;
+  transition: border-color 0.2s;
+}
+.lock-pin-input:focus {
+  border-color: var(--accent);
+}
+
+.cloud-badge-online {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

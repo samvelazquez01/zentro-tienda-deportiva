@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es" class="bg-background">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="description" content="Panel de administración de ZENTRO Tienda Deportiva" />
+    <title>ZENTRO · Panel Administrador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+  </head>
+  <body>
+    <!-- ===================== PANTALLA DE BLOQUEO POR PIN ===================== -->
+    <div class="lock-screen-overlay" id="admin-lock-screen">
+      <div class="lock-screen-box">
+        <div style="margin-bottom:16px">
+          <svg width="48" height="48" viewBox="0 0 100 100" style="margin:0 auto">
+            <rect width="100" height="100" rx="22" fill="#1c1c1c"/>
+            <path d="M 22 26 L 80 26 L 46 50 L 78 50 L 74 60 L 20 60 L 52 36 L 22 36 Z" fill="#ffffff" />
+            <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
+          </svg>
+          <h2 style="font-size:22px;font-weight:900;font-style:italic;color:#fff;margin-top:12px">ZENTRO ADMIN</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Introduce tu PIN maestro para desbloquear</p>
+        </div>
+        <form id="lock-screen-form">
+          <input type="password" id="lock-pin-input" class="lock-pin-input" maxlength="8" placeholder="••••" autocomplete="off" autofocus required />
+          <button type="submit" class="btn-accent" style="width:100%;padding:14px;font-size:15px;font-weight:800">
+            Desbloquear Panel
+          </button>
+        </form>
+        <div style="margin-top:16px;font-size:11px;color:var(--text-muted)">
+          Protección privada del dueño · PIN inicial: <b>1234</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin" id="admin-app" style="filter:blur(10px);pointer-events:none;transition:filter 0.3s">
+      <!-- ===================== SIDEBAR ===================== -->
+      <aside class="admin-side" id="admin-side">
+        <div class="logo" style="padding:10px 10px 22px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg width="34" height="34" viewBox="0 0 100 100" style="flex-shrink:0">
+              <rect width="100" height="100" rx="18" fill="#141414"/>
+              <path d="M 22 26 L 80 26 L 46 50 L 78 50 L 74 60 L 20 60 L 52 36 L 22 36 Z" fill="#ffffff" />
+              <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
+              <circle cx="48" cy="44" r="5" fill="none" stroke="#000" stroke-width="1.8"/>
+              <line x1="43" y1="44" x2="53" y2="44" stroke="#000" stroke-width="1.8"/>
+            </svg>
+            <div>
+              <div style="font-size:18px;font-weight:900;font-style:italic;color:#fff;line-height:1;letter-spacing:-0.02em">ZENTRO</div>
+              <div style="font-size:8px;font-weight:800;color:var(--accent);letter-spacing:0.18em;margin-top:2px">ADMINISTRADOR</div>
+            </div>
+          </div>
+        </div>
+
+        <a data-section="dashboard" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a>
+        <a data-section="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15M21 8l-9 5-9-5 9-5 9 5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Productos</a>
+        <a data-section="add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Agregar / Editar</a>
+        <a data-section="sellers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Vendedores (WhatsApp)</a>
+        <a data-section="finances"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Finanzas & Ganancias</a>
+        <a data-section="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>Pedidos WhatsApp</a>
+        <a data-section="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7 12 3 4 7v10l8 4 8-4Z"/><path d="M4 7l8 4 8-4M12 11v10"/></svg>Inventario</a>
+        <a data-section="database"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Respaldos</a>
+
+        <div class="spacer"></div>
+        <button id="lock-admin-btn" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;color:#f87171;font-weight:700;font-size:14px;cursor:pointer;background:transparent;width:100%;text-align:left;border:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Bloquear Panel (Salir)
+        </button>
+        <a href="index.html" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>Ver Tienda Cliente</a>
+      </aside>
+      <div class="admin-overlay" id="admin-overlay"></div>
+
+      <!-- ===================== CONTENIDO ===================== -->
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="icon-btn admin-mobile-toggle" id="admin-toggle" aria-label="Menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+            <h1 id="admin-title">Dashboard</h1>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn-ghost" id="manual-sync-firebase-btn" style="font-size:13px;padding:8px 12px;display:inline-flex;align-items:center;gap:6px">
+              ☁️ Subir Todo a Firebase
+            </button>
+            <button class="btn-ghost" data-goto="finances" style="font-size:13px;padding:8px 12px">Ver Finanzas</button>
+            <button class="btn-accent" data-goto="add">+ Nuevo Tenis</button>
+          </div>
+        </div>
+
+        <!-- ==================== 1. DASHBOARD ==================== -->
+        <section class="admin-section active" id="sec-dashboard">
+          <div class="stats" id="dashboard-stats"></div>
+
+          <div class="panel" style="margin-bottom:20px">
+            <div class="panel-title">
+              <span>Vendedores Activos en ZENTRO</span>
+              <button class="btn-accent" data-goto="sellers" style="padding:6px 12px;font-size:12px">+ Agregar Vendedor</button>
+            </div>
+            <div style="padding:16px 20px" id="dash-sellers-summary"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Tenis con Bajo Inventario (Alerta de Stock)</div>
+            <div class="table-wrap"><table id="low-stock-table"></table></div>
+          </div>
+        </section>
+
+        <!-- ==================== 2. PRODUCTOS ==================== -->
+        <section class="admin-section" id="sec-products">
+          <div class="panel">
+            <div class="panel-title">
+              <span>Inventario Completo de Productos <span class="count" id="products-count" style="color:var(--text-muted);font-size:13px"></span></span>
+              <button class="btn-accent" style="padding:8px 14px;font-size:13px" data-goto="add">+ Agregar Producto</button>
+            </div>
+            <div class="table-wrap"><table id="products-table"></table></div>
+          </div>
+        </section>
+
+        <!-- ==================== 3. AGREGAR / EDITAR PRODUCTO ==================== -->
+        <section class="admin-section" id="sec-add">
+          <div class="panel">
+            <div class="panel-title" id="form-title">Agregar Nuevo Calzado o Artículo</div>
+            <form class="form-grid" id="product-form">
+              <input type="hidden" name="id" />
+
+              <div class="field"><label>Marca</label><input name="brand" required placeholder="Nike, Jordan, Puma, New Era..." /></div>
+              <div class="field"><label>Modelo / Nombre del Tenis</label><input name="model" required placeholder="Kobe 6 Protro, Air Jordan 4 Retro..." /></div>
+
+              <div class="field"><label>Categoría</label>
+                <select name="category" id="form-category">
+                  <option value="Baloncesto">Baloncesto</option>
+                  <option value="Tenis Deportivo">Tenis Deportivo</option>
+                  <option value="Ropa Deportiva">Ropa Deportiva</option>
+                  <option value="Gorras">Gorras</option>
+                  <option value="Accesorios">Accesorios</option>
+                </select>
+              </div>
+
+              <!-- Selector de Vendedor -->
+              <div class="field">
+                <label>Vendedor Asignado (Recibirá el WhatsApp del pedido)</label>
+                <select name="sellerId" id="form-seller-select" required></select>
+              </div>
+
+              <!-- Precios para calcular ganancia -->
+              <div class="field">
+                <label>Precio de Compra / Costo ($)</label>
+                <input name="costPrice" id="form-cost-price" type="number" step="0.01" required placeholder="120.00" />
+                <small style="color:var(--text-muted);font-size:11px">Lo que costó el tenis (para calcular la ganancia)</small>
+              </div>
+
+              <div class="field">
+                <label>Precio de Venta al Cliente ($)</label>
+                <input name="price" id="form-sell-price" type="number" step="0.01" required placeholder="189.99" />
+                <small style="color:#22c55e;font-size:11px;font-weight:700" id="form-profit-preview">Ganancia estimada: $0.00</small>
+              </div>
+
+              <div class="field"><label>Stock Disponible (Unidades)</label><input name="stock" type="number" required placeholder="5" /></div>
+              <div class="field"><label>Estado</label><select name="condition"><option>Nuevo</option><option>Como nuevo</option><option>Usado</option></select></div>
+              <div class="field"><label>Color / Edición</label><input name="color" placeholder="Rojo Neón / Negro..." /></div>
+              <div class="field"><label>Género</label><select name="gender"><option>Unisex</option><option>Hombre</option><option>Mujer</option></select></div>
+
+              <div class="field">
+                <label>Tallas Disponibles (separadas por coma)</label>
+                <input name="sizes" id="form-sizes-input" placeholder="8, 8.5, 9, 9.5, 10, 10.5, 11, 12" />
+                <div class="quick-size-btns">
+                  <button type="button" class="quick-size-btn" data-preset="sneakers">Sneakers US (8-12)</button>
+                  <button type="button" class="quick-size-btn" data-preset="clothing">Ropa (S, M, L, XL)</button>
+                  <button type="button" class="quick-size-btn" data-preset="one">Ajustable / Única</button>
+                </div>
+              </div>
+
+              <div class="field full"><label>Descripción del Producto</label><textarea name="description" placeholder="Silueta, amortiguación, detalles de confección..."></textarea></div>
+              <div class="field full"><label>Características (separadas por coma)</label><input name="features" placeholder="Zoom Air, Tracción Mamba, Upper transpirable..." /></div>
+
+              <!-- Fotos -->
+              <div class="field full">
+                <label>Fotos del Tenis</label>
+                <label class="dropzone" for="img-input">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>
+                  <div><b>Subir fotos desde tu computadora o celular</b><br /><small>El sistema las comprime automáticamente para que pesen poco y carguen sin lag</small></div>
+                  <input id="img-input" type="file" accept="image/*" multiple hidden />
+                </label>
+
+                <div style="display:flex;gap:8px;margin-top:10px">
+                  <input type="url" id="img-url-input" placeholder="O pega el enlace URL de una imagen directamente" style="flex:1" class="field input" />
+                  <button type="button" class="btn-ghost" id="add-img-url-btn">+ Agregar URL</button>
+                </div>
+
+                <div class="previews" id="img-previews" style="margin-top:14px"></div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-ghost" id="cancel-form">Cancelar</button>
+                <button type="submit" class="btn-accent">Guardar Producto</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================== 4. GESTIÓN DE VENDEDORES ==================== -->
+        <section class="admin-section" id="sec-sellers">
+          <div class="panel" style="margin-bottom:20px">
+            <div class="panel-title">
+              <span>Vendedores Registrados</span>
+              <button class="btn-accent" id="toggle-add-seller-btn" style="padding:8px 14px;font-size:13px">+ Nuevo Vendedor</button>
+            </div>
+            <div style="padding:14px 20px;font-size:13px;color:var(--text-muted);border-bottom:1px solid var(--border)">
+              Puedes agregar múltiples vendedores. Cada vendedor tiene su propio número de WhatsApp. Cuando asignas un tenis a un vendedor, el cliente se comunicará directamente con él al dar clic en comprar.
+            </div>
+
+            <!-- Formulario agregar/editar vendedor -->
+            <form id="seller-form" class="form-grid" style="display:none;background:var(--surface-2);border-bottom:1px solid var(--border);padding:20px">
+              <input type="hidden" name="id" />
+              <div class="field"><label>Nombre del Vendedor</label><input name="name" required placeholder="Ej. Carlos Sneakers" /></div>
+              <div class="field">
+                <label>Número de WhatsApp (con código de país)</label>
+                <input name="phone" required placeholder="Ej. 18091234567 o 521..." />
+                <small style="color:var(--text-muted);font-size:11px">Sin espacios ni guiones</small>
+              </div>
+              <div class="field full"><label>Notas / Descripción (Opcional)</label><input name="notes" placeholder="Ej. Especialista en calzado de baloncesto Kobe / Jordan" /></div>
+              <div class="form-actions">
+                <button type="button" class="btn-ghost" id="cancel-seller-form">Cancelar</button>
+                <button type="submit" class="btn-accent">Guardar Vendedor</button>
+              </div>
+            </form>
+
+            <div style="padding:20px">
+              <div class="seller-card-list" id="sellers-cards-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 5. FINANZAS Y GANANCIAS ==================== -->
+        <section class="admin-section" id="sec-finances">
+          <div class="finance-grid" id="finances-metrics-grid"></div>
+
+          <div class="panel" style="margin-bottom:24px">
+            <div class="panel-title">
+              <span>Ganancias y Rendimiento por Vendedor</span>
+            </div>
+            <div style="padding:14px 20px;font-size:13px;color:var(--text-muted);border-bottom:1px solid var(--border)">
+              Calculado automáticamente sobre pedidos con estado <b>Pagado</b> o <b>Entregado</b> (Precio de Venta − Precio de Compra).
+            </div>
+            <div class="table-wrap"><table id="seller-finances-table"></table></div>
+          </div>
+        </section>
+
+        <!-- ==================== 6. PEDIDOS WHATSAPP ==================== -->
+        <section class="admin-section" id="sec-orders">
+          <div class="panel">
+            <div class="panel-title">
+              <span>Historial de Pedidos WhatsApp</span>
+              <button class="btn-ghost" id="clear-orders-btn" style="font-size:12px;padding:6px 10px">Limpiar Historial</button>
+            </div>
+            <div style="padding:14px 20px;font-size:13px;color:var(--text-muted);border-bottom:1px solid var(--border);line-height:1.6">
+              <b>Control de inventario automático:</b><br />
+              • Al marcar un pedido como <b>Pagado</b> o <b>Entregado</b>, el inventario se descuenta automáticamente.<br />
+              • Si solo marcas <b>Entregado</b>, aparecerá el botón <span style="color:#f59e0b;font-weight:700">⚠️ Pendiente Pago</span> para que no olvides cobrar.<br />
+              • Si el tenis se queda en 0 unidades, se oculta automáticamente de la vista de los clientes.
+            </div>
+            <div class="table-wrap"><table id="orders-table"></table></div>
+          </div>
+        </section>
+
+        <!-- ==================== 7. INVENTARIO ==================== -->
+        <section class="admin-section" id="sec-inventory">
+          <div class="panel">
+            <div class="panel-title">Control de Existencias por Vendedor</div>
+            <div class="table-wrap"><table id="inventory-table"></table></div>
+          </div>
+        </section>
+
+        <!-- ==================== 8. RESPALDOS ==================== -->
+        <section class="admin-section" id="sec-database">
+          <div class="card-settings">
+            <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Copias de Seguridad de ZENTRO</h3>
+            <p>Descarga una copia completa de tus tenis, vendedores, precios y finanzas en un solo archivo.</p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn-accent" id="export-backup-btn">Descargar Copia de Seguridad (JSON)</button>
+              <button class="btn-ghost" id="change-pin-btn">Cambiar mi PIN de Acceso</button>
+              <label class="btn-ghost" style="cursor:pointer">
+                Cargar Copia de Seguridad
+                <input type="file" id="import-backup-file" accept=".json" hidden />
+              </label>
+              <button class="btn-ghost" style="color:var(--danger);border-color:rgba(239,68,68,0.4)" id="reset-default-btn">
+                Restablecer Catálogo Inicial
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" style="bottom:24px"></div>
+
+    <!-- Firebase SDK (Firestore en tiempo real) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
+</html>

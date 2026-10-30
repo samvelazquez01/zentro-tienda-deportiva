@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es" class="bg-background">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="description" content="ZENTRO - Tienda Deportiva oficial. Tenis de baloncesto, tenis deportivos, gorras originales y ropa atlética." />
+    <title>ZENTRO · Tienda Deportiva</title>
+
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!-- ===================== HEADER ===================== -->
+    <header class="header">
+      <div class="header__top">
+        <!-- Logo ZENTRO con icono Z de baloncesto -->
+        <a class="logo-zentro" href="index.html" aria-label="ZENTRO Inicio">
+          <div class="logo-zentro-icon">
+            <svg width="34" height="34" viewBox="0 0 100 100">
+              <rect width="100" height="100" rx="18" fill="#141414"/>
+              <path d="M 22 26 L 80 26 L 46 50 L 78 50 L 74 60 L 20 60 L 52 36 L 22 36 Z" fill="#ffffff" />
+              <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
+              <circle cx="48" cy="44" r="5" fill="none" stroke="#000" stroke-width="1.8"/>
+              <line x1="43" y1="44" x2="53" y2="44" stroke="#000" stroke-width="1.8"/>
+            </svg>
+          </div>
+          <div class="logo-zentro-text">
+            <span class="logo-zentro-title">ZENTRO</span>
+            <span class="logo-zentro-sub">— TIENDA DEPORTIVA —</span>
+          </div>
+        </a>
+
+        <div class="header__spacer"></div>
+
+        <!-- Accesos visibles en desktop -->
+        <div class="desktop-actions">
+          <button class="icon-btn" data-open="favorites" aria-label="Favoritos">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.5 4.04 3 5.5l7 7Z"/></svg>
+          </button>
+          <button class="icon-btn" data-open="cart" aria-label="Carrito" style="position:relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span class="badge-count" data-cart-badge hidden>0</span>
+          </button>
+        </div>
+        <button class="icon-btn" data-open="menu" aria-label="Abrir menú" style="margin-left:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+
+      <!-- Buscador + filtros -->
+      <div class="search">
+        <div class="search__box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input
+            id="search-input"
+            type="search"
+            placeholder="Busca tenis Kobe, Jordan, gorras, tallas…"
+            autocomplete="off"
+          />
+        </div>
+        <button class="icon-btn filter-btn" data-open="filters" aria-label="Filtros">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          <span class="badge-count" data-filter-badge hidden>0</span>
+        </button>
+      </div>
+
+      <!-- Categorías horizontales -->
+      <nav class="categories hide-scroll" id="categories" aria-label="Categorías"></nav>
+    </header>
+
+    <!-- ===================== CONTENIDO ===================== -->
+    <main class="main">
+      <!-- Vista: catálogo -->
+      <section class="view active" id="view-home">
+        <div class="section-head">
+          <h2 id="grid-title">Todos los productos</h2>
+          <span class="count" id="grid-count"></span>
+        </div>
+        <div class="grid" id="product-grid"></div>
+      </section>
+
+      <!-- Vista: favoritos -->
+      <section class="view" id="view-favorites">
+        <div class="section-head"><h2>Tus favoritos</h2></div>
+        <div class="grid" id="favorites-grid"></div>
+      </section>
+
+      <!-- Vista: contacto / perfil -->
+      <section class="view" id="view-profile">
+        <div class="page-info">
+          <h2>Atención al Cliente</h2>
+          <p>En ZENTRO coordinas tus pedidos y consultas directamente con nuestros vendedores autorizados por WhatsApp.</p>
+          <div class="side-menu__profile" style="border:1px solid var(--border);border-radius:var(--radius);margin-top:20px">
+            <span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg></span>
+            <div><b>ZENTRO Oficial</b><br /><small style="color:var(--text-muted)">Atención inmediata</small></div>
+          </div>
+          <div style="margin-top:20px">
+            <button class="btn-whatsapp" id="profile-direct-wa" style="width:100%">
+              <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.05 7.42C8.86 7.42 8.56 7.49 8.31 7.76C8.06 8.04 7.34 8.71 7.34 10.07C7.34 11.43 8.33 12.75 8.47 12.94C8.61 13.12 10.42 15.92 13.18 17.11C13.84 17.4 14.35 17.57 14.75 17.7C15.41 17.91 16.02 17.88 16.5 17.81C17.03 17.73 18.14 17.14 18.37 16.49C18.6 15.84 18.6 15.29 18.53 15.17C18.46 15.05 18.27 14.99 17.99 14.85C17.71 14.71 16.34 14.04 16.09 13.95C15.84 13.86 15.65 13.81 15.46 14.09C15.27 14.37 14.74 14.99 14.58 15.17C14.42 15.36 14.26 15.38 13.98 15.24C13.7 15.1 12.8 14.81 11.74 13.86C10.91 13.12 10.35 12.21 10.21 11.93C10.07 11.65 10.2 11.5 10.34 11.36C10.46 11.24 10.61 11.04 10.75 10.88C10.89 10.72 10.94 10.6 11.03 10.42C11.12 10.24 11.07 10.07 11.01 9.93C10.94 9.79 10.39 8.44 10.15 7.89C9.93 7.35 9.7 7.42 9.53 7.41C9.37 7.41 9.21 7.42 9.05 7.42Z"/></svg>
+              Escribir al WhatsApp Principal
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista: página informativa -->
+      <section class="view" id="view-page">
+        <div class="page-info" id="page-content"></div>
+      </section>
+    </main>
+
+    <!-- Botón flotante de WhatsApp -->
+    <a href="#" class="whatsapp-float" id="global-wa-float" aria-label="Escribir por WhatsApp">
+      <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.05 7.42C8.86 7.42 8.56 7.49 8.31 7.76C8.06 8.04 7.34 8.71 7.34 10.07C7.34 11.43 8.33 12.75 8.47 12.94C8.61 13.12 10.42 15.92 13.18 17.11C13.84 17.4 14.35 17.57 14.75 17.7C15.41 17.91 16.02 17.88 16.5 17.81C17.03 17.73 18.14 17.14 18.37 16.49C18.6 15.84 18.6 15.29 18.53 15.17C18.46 15.05 18.27 14.99 17.99 14.85C17.71 14.71 16.34 14.04 16.09 13.95C15.84 13.86 15.65 13.81 15.46 14.09C15.27 14.37 14.74 14.99 14.58 15.17C14.42 15.36 14.26 15.38 13.98 15.24C13.7 15.1 12.8 14.81 11.74 13.86C10.91 13.12 10.35 12.21 10.21 11.93C10.07 11.65 10.2 11.5 10.34 11.36C10.46 11.24 10.61 11.04 10.75 10.88C10.89 10.72 10.94 10.6 11.03 10.42C11.12 10.24 11.07 10.07 11.01 9.93C10.94 9.79 10.39 8.44 10.15 7.89C9.93 7.35 9.7 7.42 9.53 7.41C9.37 7.41 9.21 7.42 9.05 7.42Z"/></svg>
+      <span>WhatsApp</span>
+    </a>
+
+    <!-- ===================== BOTTOM NAV (móvil) ===================== -->
+    <nav class="bottom-nav" aria-label="Navegación inferior">
+      <button class="active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 21V12h6v9"/></svg>Inicio</button>
+      <button data-nav="favorites"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.5 4.04 3 5.5l7 7Z"/></svg>Favoritos</button>
+      <button data-nav="cart" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>Carrito<span class="badge-count" data-cart-badge hidden>0</span></button>
+      <button data-nav="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>Contacto</button>
+      <button data-nav="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Más</button>
+    </nav>
+
+    <!-- ===================== OVERLAY + PANELES ===================== -->
+    <div class="overlay" data-overlay></div>
+
+    <!-- Menú lateral -->
+    <aside class="drawer drawer--left" id="drawer-menu" aria-label="Menú lateral">
+      <div class="side-menu__profile">
+        <span class="avatar" style="background:#000;border:1px solid var(--border)">
+          <svg width="24" height="24" viewBox="0 0 100 100">
+            <path d="M 22 26 L 80 26 L 46 50 L 78 50 L 74 60 L 20 60 L 52 36 L 22 36 Z" fill="#ffffff" />
+            <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
+          </svg>
+        </span>
+        <div><b>ZENTRO</b><br /><small style="color:var(--text-muted)">Tienda Deportiva Original</small></div>
+      </div>
+      <ul class="side-menu__list" id="side-menu-list"></ul>
+    </aside>
+
+    <!-- Carrito -->
+    <aside class="drawer drawer--right" id="drawer-cart" aria-label="Carrito">
+      <div class="panel-head">
+        <h3>Tu Carrito</h3>
+        <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="panel-body" id="cart-body"></div>
+      <div class="panel-foot" style="flex-direction:column;gap:12px" id="cart-foot" hidden>
+        <div class="cart-total"><span>Total</span><span id="cart-total">$0.00</span></div>
+        <button class="btn-whatsapp" style="width:100%" id="checkout-btn">
+          <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.05 7.42C8.86 7.42 8.56 7.49 8.31 7.76C8.06 8.04 7.34 8.71 7.34 10.07C7.34 11.43 8.33 12.75 8.47 12.94C8.61 13.12 10.42 15.92 13.18 17.11C13.84 17.4 14.35 17.57 14.75 17.7C15.41 17.91 16.02 17.88 16.5 17.81C17.03 17.73 18.14 17.14 18.37 16.49C18.6 15.84 18.6 15.29 18.53 15.17C18.46 15.05 18.27 14.99 17.99 14.85C17.71 14.71 16.34 14.04 16.09 13.95C15.84 13.86 15.65 13.81 15.46 14.09C15.27 14.37 14.74 14.99 14.58 15.17C14.42 15.36 14.26 15.38 13.98 15.24C13.7 15.1 12.8 14.81 11.74 13.86C10.91 13.12 10.35 12.21 10.21 11.93C10.07 11.65 10.2 11.5 10.34 11.36C10.46 11.24 10.61 11.04 10.75 10.88C10.89 10.72 10.94 10.6 11.03 10.42C11.12 10.24 11.07 10.07 11.01 9.93C10.94 9.79 10.39 8.44 10.15 7.89C9.93 7.35 9.7 7.42 9.53 7.41C9.37 7.41 9.21 7.42 9.05 7.42Z"/></svg>
+          Pedir por WhatsApp
+        </button>
+      </div>
+    </aside>
+
+    <!-- ===================== SHEET CHECKOUT WHATSAPP ===================== -->
+    <section class="sheet" id="sheet-checkout" aria-label="Confirmar pedido por WhatsApp" style="height:90vh">
+      <div class="sheet__handle"></div>
+      <div class="panel-head">
+        <h3>Finalizar pedido por WhatsApp</h3>
+        <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="panel-body checkout-modal">
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">
+          Se abrirá el WhatsApp del vendedor asignado con el detalle del tenis, tu talla y el precio total.
+        </p>
+
+        <!-- Resumen del pedido -->
+        <div class="checkout-summary-box" id="checkout-summary-box"></div>
+
+        <!-- Datos del cliente -->
+        <div class="checkout-section">
+          <h4>Tu Nombre Completo</h4>
+          <input class="checkout-input" id="checkout-customer-name" placeholder="Ej. Carlos Martínez" />
+        </div>
+
+        <!-- Método de entrega -->
+        <div class="checkout-section">
+          <h4>Método de Entrega</h4>
+          <div class="checkout-radio-group">
+            <div class="checkout-radio-card active" data-delivery="Envío a domicilio">
+              <b>🚚 Envío a domicilio</b>
+              <small>Recíbelo en tu dirección</small>
+            </div>
+            <div class="checkout-radio-card" data-delivery="Retiro en persona">
+              <b>📍 Recoger en persona</b>
+              <small>Punto acordado</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dirección de entrega -->
+        <div class="checkout-section" id="checkout-address-section">
+          <h4>Dirección o Ciudad de Entrega</h4>
+          <input class="checkout-input" id="checkout-customer-address" placeholder="Ej. Santo Domingo, Sector..." />
+        </div>
+
+        <!-- Método de pago -->
+        <div class="checkout-section">
+          <h4>Método de Pago Preferido</h4>
+          <div class="checkout-radio-group">
+            <div class="checkout-radio-card active" data-payment="Transferencia / Depósito bancario">
+              <b>🏦 Transferencia</b>
+              <small>El vendedor te envía cuenta</small>
+            </div>
+            <div class="checkout-radio-card" data-payment="Efectivo al recibir">
+              <b>💵 Efectivo</b>
+              <small>Al momento de la entrega</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notas adicionales -->
+        <div class="checkout-section">
+          <h4>Notas o Preguntas para el Vendedor</h4>
+          <input class="checkout-input" id="checkout-customer-notes" placeholder="Ej. ¿Tienen disponible para entrega hoy?" />
+        </div>
+
+        <!-- Botones de acción -->
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+          <button class="btn-whatsapp" style="width:100%" id="confirm-whatsapp-order-btn">
+            <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M9.05 7.42C8.86 7.42 8.56 7.49 8.31 7.76C8.06 8.04 7.34 8.71 7.34 10.07C7.34 11.43 8.33 12.75 8.47 12.94C8.61 13.12 10.42 15.92 13.18 17.11C13.84 17.4 14.35 17.57 14.75 17.7C15.41 17.91 16.02 17.88 16.5 17.81C17.03 17.73 18.14 17.14 18.37 16.49C18.6 15.84 18.6 15.29 18.53 15.17C18.46 15.05 18.27 14.99 17.99 14.85C17.71 14.71 16.34 14.04 16.09 13.95C15.84 13.86 15.65 13.81 15.46 14.09C15.27 14.37 14.74 14.99 14.58 15.17C14.42 15.36 14.26 15.38 13.98 15.24C13.7 15.1 12.8 14.81 11.74 13.86C10.91 13.12 10.35 12.21 10.21 11.93C10.07 11.65 10.2 11.5 10.34 11.36C10.46 11.24 10.61 11.04 10.75 10.88C10.89 10.72 10.94 10.6 11.03 10.42C11.12 10.24 11.07 10.07 11.01 9.93C10.94 9.79 10.39 8.44 10.15 7.89C9.93 7.35 9.7 7.42 9.53 7.41C9.37 7.41 9.21 7.42 9.05 7.42Z"/></svg>
+            Abrir chat y Enviar Pedido a WhatsApp
+          </button>
+          <button class="btn-ghost" style="width:100%" id="quick-whatsapp-order-btn">
+            Saltar formulario e ir directo a WhatsApp
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="sheet" id="sheet-filters" aria-label="Filtros">
+      <div class="sheet__handle"></div>
+      <div class="panel-head">
+        <h3>Filtros y orden</h3>
+        <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="panel-body" id="filters-body"></div>
+      <div class="panel-foot">
+        <button class="btn-ghost" style="flex:1" id="clear-filters">Limpiar</button>
+        <button class="btn-accent" style="flex:2" id="apply-filters">Ver resultados</button>
+      </div>
+    </section>
+
+    <!-- Detalle de producto -->
+    <section class="sheet" id="sheet-product" aria-label="Detalle del producto" style="height:92vh">
+      <div class="sheet__handle"></div>
+      <div class="panel-head">
+        <h3>Detalle del Calzado</h3>
+        <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="panel-body product-detail" id="product-detail" style="padding:0"></div>
+    </section>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase SDK (Firestore en tiempo real) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
