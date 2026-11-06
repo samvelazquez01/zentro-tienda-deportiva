@@ -494,9 +494,12 @@ const Store = (() => {
     const entered = String(enteredPin || "").trim();
     if (!entered) return false;
     const current = getMasterPin();
-    // 2601 y 1234 son contraseñas maestras garantizadas para que nunca se bloquee el admin
-    if (entered === "2601" || entered === "1234" || entered === current) return true;
-    return false;
+    if (isMasterPinCustomized()) {
+      // Si el dueño ya configuró su contraseña, SOLO se acepta su contraseña personalizada
+      return entered === current;
+    }
+    // Si aún no la ha cambiado, se acepta el PIN inicial 2601
+    return entered === current || entered === "2601";
   };
 
   const validateMasterPinAsync = async (enteredPin) => {
@@ -512,13 +515,17 @@ const Store = (() => {
         const doc = await window.FIREBASE.db.collection("settings").doc("security").get();
         if (doc.exists) {
           const data = doc.data();
-          const cloudPin = data?.masterPin;
-          if (data?.isCustomized) {
+          const cloudPin = data?.masterPin ? String(data.masterPin).trim() : null;
+          const isCustom = Boolean(data?.isCustomized);
+          if (isCustom) {
             localStorage.setItem("zentro_master_pin_customized", "true");
           }
-          if (cloudPin && entered === String(cloudPin).trim()) {
-            localStorage.setItem("zentro_master_pin", String(cloudPin).trim());
-            return true;
+          if (cloudPin) {
+            localStorage.setItem("zentro_master_pin", cloudPin);
+            if (isCustom) {
+              return entered === cloudPin;
+            }
+            return entered === cloudPin || entered === "2601";
           }
         }
       } catch (err) {

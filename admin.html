@@ -34,45 +34,20 @@
             <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
           </svg>
           <h2 style="font-size:22px;font-weight:900;font-style:italic;color:#fff;margin-top:12px">ZENTRO ADMIN</h2>
-          <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Introduce tu PIN maestro para desbloquear</p>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:4px">Introduce tu contraseña de administrador para desbloquear</p>
         </div>
-        <form id="lock-screen-form" onsubmit="event.preventDefault(); window.doInstantUnlock();">
-          <input type="password" id="lock-pin-input" class="lock-pin-input" maxlength="20" placeholder="Introduce tu PIN o contraseña" autocomplete="current-password" autofocus />
-          <button type="submit" class="btn-accent" style="width:100%;padding:14px;font-size:15px;font-weight:800">
+        <form id="lock-screen-form">
+          <input type="password" id="lock-pin-input" class="lock-pin-input" required maxlength="32" placeholder="Introduce tu contraseña" autocomplete="current-password" autofocus />
+          <button type="submit" id="lock-submit-btn" class="btn-accent" style="width:100%;padding:14px;font-size:15px;font-weight:800">
             Desbloquear Panel
           </button>
         </form>
-        <div style="margin-top:16px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
-          <span>Acceso directo garantizado:</span>
-          <button type="button" id="quick-pin-2601" onclick="window.doInstantUnlock('2601');" style="background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#22c55e;font-weight:800;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px" title="Clic para entrar con 2601">🔓 Entrar con 2601</button>
-          <button type="button" id="quick-pin-1234" onclick="window.doInstantUnlock('1234');" style="background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#22c55e;font-weight:800;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px" title="Clic para entrar con 1234">🔓 Entrar con 1234</button>
-        </div>
       </div>
     </div>
     <script>
-      window.doInstantUnlock = function(forcedPin) {
-        if (forcedPin) {
-          var pinEl = document.getElementById("lock-pin-input");
-          if (pinEl) pinEl.value = forcedPin;
-        }
-        sessionStorage.setItem("zentro_admin_unlocked", "true");
-        localStorage.setItem("zentro_admin_unlocked", "true");
+      if (sessionStorage.getItem("zentro_admin_unlocked") === "true") {
         var ls = document.getElementById("admin-lock-screen");
-        if (ls) {
-          ls.style.setProperty("display", "none", "important");
-        }
-        var app = document.getElementById("admin-app");
-        if (app) {
-          app.style.setProperty("display", "flex", "important");
-        }
-        if (typeof window.adminUnlock === "function") {
-          window.adminUnlock();
-        } else if (typeof window.adminGoto === "function") {
-          window.adminGoto("dashboard");
-        }
-      };
-      if (sessionStorage.getItem("zentro_admin_unlocked") === "true" || localStorage.getItem("zentro_admin_unlocked") === "true") {
-        window.doInstantUnlock();
+        if (ls) ls.style.setProperty("display", "none", "important");
       }
     </script>
 

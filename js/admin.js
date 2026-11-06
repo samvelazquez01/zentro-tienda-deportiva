@@ -43,7 +43,7 @@
 
   function unlockAdmin() {
     sessionStorage.setItem(UNLOCKED_KEY, "true");
-    localStorage.setItem(UNLOCKED_KEY, "true");
+    localStorage.removeItem(UNLOCKED_KEY);
     const ls = $("#admin-lock-screen") || document.getElementById("admin-lock-screen");
     if (ls) {
       ls.style.setProperty("display", "none", "important");
@@ -80,46 +80,31 @@
   window.adminUnlock = unlockAdmin;
   window.adminLock = lockAdmin;
 
-  // Botones de acceso rápido en pantalla de bloqueo
-  $("#quick-pin-2601")?.addEventListener("click", () => {
-    if (pinInput) pinInput.value = "2601";
-    unlockAdmin();
-    toast("¡Bienvenido a ZENTRO Admin!");
-  });
-
-  $("#quick-pin-1234")?.addEventListener("click", () => {
-    if (pinInput) pinInput.value = "1234";
-    unlockAdmin();
-    toast("¡Bienvenido a ZENTRO Admin!");
-  });
-
-  // Manejar el submit del PIN con desbloqueo instantáneo
+  // Manejar el submit del PIN con verificación estricta
   lockForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     const entered = (pinInput?.value || "").trim();
-    if (!entered) return;
-
-    // 1. PINs maestros garantizados de acceso inmediato (2601, 1234 o pin personalizado guardado)
-    const localPin = (window.Store && typeof Store.getMasterPin === "function") ? Store.getMasterPin() : "2601";
-    if (entered === "2601" || entered === "1234" || entered === localPin) {
-      unlockAdmin();
-      toast("¡Bienvenido a ZENTRO Admin!");
+    if (!entered) {
+      toast("Introduce tu contraseña");
+      pinInput?.focus();
       return;
     }
 
-    // 2. Si no coincide en local, verificar contra Firebase Firestore en la nube
-    toast("Verificando contraseña en Firebase...");
+    toast("Verificando contraseña...");
     let isValid = false;
     if (window.Store && typeof Store.validateMasterPinAsync === "function") {
       isValid = await Store.validateMasterPinAsync(entered);
+    } else if (window.Store && typeof Store.validateMasterPin === "function") {
+      isValid = Store.validateMasterPin(entered);
     }
+
     if (isValid) {
       unlockAdmin();
       toast("¡Bienvenido a ZENTRO Admin!");
     } else {
-      toast("❌ Contraseña incorrecta (Usa 2601 o 1234)");
+      toast("❌ Contraseña incorrecta");
       if (pinInput) {
         pinInput.value = "";
         pinInput.focus();
@@ -127,8 +112,8 @@
     }
   });
 
-  // Verificar estado de desbloqueo de la sesión actual
-  if (sessionStorage.getItem(UNLOCKED_KEY) === "true" || localStorage.getItem(UNLOCKED_KEY) === "true") {
+  // Verificar estado de desbloqueo de la sesión activa
+  if (sessionStorage.getItem(UNLOCKED_KEY) === "true") {
     unlockAdmin();
   } else {
     lockAdmin();
