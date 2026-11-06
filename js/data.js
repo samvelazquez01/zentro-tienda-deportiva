@@ -28,6 +28,7 @@ const SIDE_MENU = [
   { label: "Gorras", type: "category" },
   { label: "Accesorios", type: "category" },
   { label: "Marcas", type: "brands" },
+  { label: "Calificar una Compra", type: "rate" },
   { label: "Contacto", type: "page" },
   { label: "Sobre nosotros", type: "page" },
   { label: "Políticas de envío", type: "page" },
@@ -362,3 +363,9 @@ const PRODUCTS = [
     ],
   }
 ];
+
+if (typeof window !== "undefined") {
+  window.CATEGORIES = CATEGORIES;
+  window.SIDE_MENU = SIDE_MENU;
+  window.PRODUCTS = PRODUCTS;
+}

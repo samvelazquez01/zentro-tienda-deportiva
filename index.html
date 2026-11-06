@@ -16,6 +16,14 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <!-- Google Analytics Tag -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C86W6M1BSX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-C86W6M1BSX');
+    </script>
   </head>
   <body>
     <!-- ===================== HEADER ===================== -->
@@ -62,7 +70,7 @@
           <input
             id="search-input"
             type="search"
-            placeholder="Busca tenis Kobe, Jordan, gorras, tallas…"
+            placeholder="Busca tenis, ropa, gorras, artículos deportivos…"
             autocomplete="off"
           />
         </div>
@@ -263,6 +271,62 @@
         <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
       <div class="panel-body product-detail" id="product-detail" style="padding:0"></div>
+    </section>
+
+    <!-- Perfil / Tienda del Vendedor -->
+    <section class="sheet" id="sheet-seller-store" aria-label="Tienda del Vendedor" style="height:92vh">
+      <div class="sheet__handle"></div>
+      <div class="panel-head">
+        <h3 id="seller-store-title">Tienda del Vendedor</h3>
+        <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="panel-body" id="seller-store-body"></div>
+    </section>
+
+    <!-- Calificar Vendedor (Verificado con Pedido) -->
+    <section class="sheet" id="sheet-rate-seller" aria-label="Calificar Vendedor">
+      <div class="sheet__handle"></div>
+      <div class="panel-head">
+        <h3>Calificar tu Compra</h3>
+        <button class="icon-btn" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="panel-body" style="padding:20px">
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">
+          🛡️ Para garantizar una calificación justa y no sesgada, introduce el <b>Código de Pedido WhatsApp</b> (ej. ORD-1234) que recibiste al comprar.
+        </p>
+
+        <form id="rating-form" style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">Código de Pedido (#ORD-XXXX) *</label>
+            <input class="checkout-input" id="rate-order-id" required placeholder="Ej. ORD-1001" style="text-transform:uppercase" />
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">Tu Nombre Completo *</label>
+            <input class="checkout-input" id="rate-customer-name" required placeholder="Ej. Carlos Martínez" />
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">Calificación en Estrellas *</label>
+            <select class="checkout-input" id="rate-stars" required>
+              <option value="5">★★★★★ (5 estrellas - Excelente)</option>
+              <option value="4">★★★★☆ (4 estrellas - Muy Bueno)</option>
+              <option value="3">★★★☆☆ (3 estrellas - Regular)</option>
+              <option value="2">★★☆☆☆ (2 estrellas - Malo)</option>
+              <option value="1">★☆☆☆☆ (1 estrella - Pésimo)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px">Tu Opinión o Reseña sobre el Vendedor</label>
+            <textarea class="checkout-input" id="rate-comment" rows="3" placeholder="¿Cómo fue la atención, puntualidad y originalidad del calzado?"></textarea>
+          </div>
+
+          <button type="submit" class="btn-accent" style="padding:14px;margin-top:6px">
+            Enviar Calificación Verificada
+          </button>
+        </form>
+      </div>
     </section>
 
     <!-- Toast -->

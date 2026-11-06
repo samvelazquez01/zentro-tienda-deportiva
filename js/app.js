@@ -23,6 +23,8 @@
       gender: "",
       sport: "",
       size: "",
+      province: "",
+      sellerId: "",
       min: "",
       max: "",
       sort: "recientes",
@@ -129,8 +131,9 @@
 
   const getFiltered = () => {
     const f = state.filters;
-    // REGLA CLAVE: Solo productos en existencia (stock > 0). Si se agotó, se quita del cliente.
+    // REGLA CLAVE: Solo productos válidos en existencia (stock > 0, de vendedores activos no suspendidos)
     let list = Store.getPublicProducts().filter((p) => {
+      const seller = Store.getSeller(p.sellerId);
       if (state.category !== "Todos" && p.category !== state.category) return false;
       if (!matchesSearch(p, state.query)) return false;
       if (f.brand && p.brand !== f.brand) return false;
@@ -139,6 +142,8 @@
       if (f.gender && p.gender !== f.gender) return false;
       if (f.sport && p.sport !== f.sport) return false;
       if (f.size && (!p.sizes || !p.sizes.includes(f.size))) return false;
+      if (f.province && seller && seller.province !== f.province) return false;
+      if (f.sellerId && p.sellerId !== f.sellerId) return false;
       if (f.min !== "" && p.price < Number(f.min)) return false;
       if (f.max !== "" && p.price > Number(f.max)) return false;
       return true;
@@ -155,7 +160,8 @@
         list.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
         break;
       default:
-        list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+        // Mantener destacados primero
+        list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
     }
     return list;
   };
@@ -178,10 +184,12 @@
       ? `Talla ${p.sizes[0]}${p.sizes.length > 1 ? "+" : ""}`
       : "Disponible";
 
+    const conditionBadge = `<span class="card__tag ${p.condition === "Usado" ? "used" : ""}">${p.condition || "Nuevo"}</span>`;
+
     return `
       <article class="card">
         <div class="card__media">
-          <span class="card__tag ${p.condition === "Usado" ? "used" : ""}">${p.condition || "Nuevo"}</span>
+          ${conditionBadge}
           <span class="card__badge-sport">${p.category || "Baloncesto"}</span>
           <button class="card__fav ${fav ? "active" : ""}" data-fav="${p.id}" aria-label="Favorito">${ICON.heart}</button>
           <div class="card__track hide-scroll" data-detail="${p.id}">${imgs}</div>
@@ -190,7 +198,9 @@
         <div class="card__body">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
             <span class="card__brand">${p.brand}</span>
-            <small class="seller-tag" style="font-size:10px">${seller ? seller.name : "ZENTRO"}</small>
+            <button class="seller-tag" data-view-seller="${seller?.id || "v1"}" style="font-size:10px;cursor:pointer;background:none;border:none;padding:2px 6px">
+              📍 ${seller?.province || "RD"} · <b>${seller ? seller.name : "ZENTRO"}</b>
+            </button>
           </div>
           <div class="card__model" data-detail="${p.id}">${p.model}</div>
           <div class="card__meta">
@@ -235,7 +245,9 @@
     ...new Set(Store.getPublicProducts().flatMap((p) => p.sizes || []).filter(Boolean)),
   ];
 
-  const pillGroup = (label, field, values) => `
+  const pillGroup = (label, field, values) => {
+    if (!values || !values.length) return "";
+    return `
     <div class="filter-group">
       <label>${label}</label>
       <div class="filter-options">
@@ -249,9 +261,13 @@
           .join("")}
       </div>
     </div>`;
+  };
 
   const renderFilters = () => {
     const f = state.filters;
+    const activeSellers = Store.getSellers().filter((s) => s.status !== "suspended");
+    const provinces = [...new Set(activeSellers.map((s) => s.province).filter(Boolean))];
+
     $("#filters-body").innerHTML = `
       <div class="filter-group">
         <label>Ordenar por</label>
@@ -262,6 +278,8 @@
           <option value="populares" ${f.sort === "populares" ? "selected" : ""}>Más populares</option>
         </select>
       </div>
+      <!-- Filtro por Ubicación / Provincia de Vendedores -->
+      ${pillGroup("📍 Ubicación / Provincia del Vendedor", "province", provinces)}
       ${pillGroup("Marca", "brand", uniqueValues("brand"))}
       ${pillGroup("Categoría", "category", CATEGORIES.filter((c) => c !== "Todos"))}
       ${pillGroup("Talla", "size", allSizes())}
@@ -282,7 +300,7 @@
   const activeFilterCount = () => {
     const f = state.filters;
     let n = 0;
-    ["brand", "condition", "color", "gender", "sport", "size", "category"].forEach((k) => {
+    ["brand", "condition", "color", "gender", "sport", "size", "category", "province", "sellerId"].forEach((k) => {
       if (f[k]) n++;
     });
     if (f.min !== "" || f.max !== "") n++;
@@ -346,7 +364,7 @@
   };
 
   /* ============================================================
-     RENDER: Detalle del Tenis (Con vendedor asignado)
+     RENDER: Detalle del Tenis (Con vendedor asignado y reseñas)
      ============================================================ */
   let detailSelectedSize = null;
 
@@ -367,9 +385,12 @@
         <button class="card__fav ${Store.isFavorite(p.id) ? "active" : ""}" data-fav="${p.id}" style="top:14px;right:14px" aria-label="Favorito">${ICON.heart}</button>
       </div>
       <div class="pd-info">
-        <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <div class="pd-brand">${p.brand}</div>
-          <span class="badge-whatsapp">${ICON.wa} Vendedor: <b>${seller.name}</b></span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="badge-whatsapp">${ICON.wa} Vendedor: <b>${seller.name}</b></span>
+            <span style="color:#facc15;font-weight:800;font-size:12px">★ ${seller.rating || "5.0"}</span>
+          </div>
         </div>
         <h1>${p.model}</h1>
         <div class="card__meta">
@@ -379,6 +400,25 @@
           <small style="color:#22c55e">${p.stock > 0 ? p.stock + " en stock" : "Agotado"}</small>
         </div>
         <div class="pd-price">${money(p.price)}</div>
+
+        <!-- Tarjeta de Perfil del Vendedor -->
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:16px 0;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:12px;color:var(--text-muted)">Artículo despachado por:</div>
+            <b style="font-size:14px">${seller.name}</b>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+              📍 <b>${seller.province || "Santo Domingo"}</b> · <span style="color:#facc15;font-weight:700">★ ${seller.rating || "5.0"}</span> (${seller.ratingCount || 0} opiniones verificadas)
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn-ghost" data-view-seller="${seller.id}" style="font-size:11px;padding:6px 10px;white-space:nowrap">
+              Ver su tienda ↗
+            </button>
+            <button class="btn-ghost" data-open-rate="${seller.id}" style="font-size:11px;padding:4px 8px;white-space:nowrap;color:#facc15">
+              ★ Calificar
+            </button>
+          </div>
+        </div>
 
         <div class="pd-section-title">Selecciona tu talla</div>
         <div class="pd-sizes" id="pd-sizes">
@@ -413,6 +453,76 @@
         }
       </div>`;
     openPanel("sheet-product");
+  };
+
+  /* ============================================================
+     RENDER: Perfil y Tienda Completa de un Vendedor
+     ============================================================ */
+  const renderSellerStore = (sellerId) => {
+    const seller = Store.getSeller(sellerId);
+    if (!seller) return;
+
+    const allPublic = Store.getPublicProducts();
+    const sellerProducts = allPublic.filter((p) => p.sellerId === sellerId);
+    const ratings = Store.getRatings(sellerId);
+
+    $("#seller-store-title").textContent = `Tienda: ${seller.name}`;
+
+    $("#seller-store-body").innerHTML = `
+      <div style="padding:20px">
+        <!-- Encabezado de la tienda -->
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">
+                VENDEDOR VERIFICADO
+              </div>
+              <h2 style="font-size:20px;font-weight:900;margin:4px 0 2px">${seller.name}</h2>
+              <div style="font-size:13px;color:var(--text-muted)">
+                📍 Ubicación: <b>${seller.province || "República Dominicana"}</b> · 💬 WhatsApp: <b>+${seller.phone}</b>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <span style="background:rgba(250,204,21,0.15);color:#facc15;border:1px solid rgba(250,204,21,0.3);padding:6px 12px;border-radius:999px;font-size:14px;font-weight:800">
+                ★ ${seller.rating || "5.0"} (${ratings.length} opiniones)
+              </span>
+              <div style="margin-top:8px">
+                <button class="btn-ghost" data-open-rate="${seller.id}" style="font-size:11px;padding:4px 8px;color:#facc15">
+                  ★ Dejar mi Calificación
+                </button>
+              </div>
+            </div>
+          </div>
+          ${seller.notes ? `<p style="font-size:13px;color:var(--text-muted);margin-top:12px;line-height:1.5">${seller.notes}</p>` : ""}
+        </div>
+
+        <!-- Catálogo del vendedor -->
+        <div class="section-head" style="margin-bottom:12px">
+          <h3>Tenis disponibles de este vendedor (${sellerProducts.length})</h3>
+        </div>
+        <div class="grid" id="seller-products-grid">
+          ${sellerProducts.length ? sellerProducts.map(cardHTML).join("") : `<div class="empty" style="grid-column:1/-1">${ICON.empty}<p>Este vendedor no tiene artículos disponibles en este momento.</p></div>`}
+        </div>
+
+        <!-- Opiniones verificadas -->
+        <div class="section-head" style="margin:28px 0 12px">
+          <h3>Opiniones Verificadas de Clientes (${ratings.length})</h3>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${ratings.length ? ratings.map((r) => `
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <b>${r.customerName}</b>
+                <span style="color:#facc15;font-weight:800;font-size:12px">${"★".repeat(r.stars)}</span>
+              </div>
+              <p style="margin:4px 0 0;font-size:13px;color:var(--text);line-height:1.5">${r.comment || "Excelente compra."}</p>
+              <small style="color:var(--text-muted);font-size:11px;display:block;margin-top:4px">${r.date} · ✓ Pedido verificado #${r.orderId}</small>
+            </div>
+          `).join("") : `<p style="color:var(--text-muted);font-size:13px">Aún no hay calificaciones para este vendedor.</p>`}
+        </div>
+      </div>`;
+
+    openPanel("sheet-seller-store");
   };
 
   /* ============================================================
@@ -554,6 +664,9 @@
       total: total,
     });
 
+    // Registrar analítica de clic en WhatsApp
+    Store.recordWhatsAppClick(targetSeller ? targetSeller.id : "v1", itemsToBuy[0]?.id || null);
+
     // Formatear mensaje para WhatsApp
     let msg = `🔥 *NUEVO PEDIDO - ZENTRO TIENDA DEPORTIVA* 🔥\n`;
     msg += `🔖 Pedido: #${savedOrder.id}\n`;
@@ -584,14 +697,14 @@
     msg += `--------------------------------\n`;
     msg += `💰 *TOTAL A PAGAR: ${money(total)}*\n`;
     msg += `--------------------------------\n\n`;
-    msg += `¡Hola ${targetSeller ? targetSeller.name : ""}! Quiero confirmar este pedido. Por favor me confirmas disponibilidad y tu número de cuenta para realizarte el pago. ¡Gracias!`;
+    msg += `¡Hola ${targetSeller ? targetSeller.name : ""}! Quiero confirmar este pedido #${savedOrder.id}. Por favor me confirmas disponibilidad y tu número de cuenta para realizarte el pago. ¡Gracias!`;
 
     if (!state.checkout.directProduct) {
       Store.clearCart();
     }
 
     closeAll();
-    toast("Abriendo WhatsApp con tu pedido...");
+    toast(`Abriendo WhatsApp con tu pedido #${savedOrder.id}... (Guarda este código para calificar tu compra)`);
 
     const encoded = encodeURIComponent(msg);
     const waUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`;
@@ -620,6 +733,7 @@
     menu: "drawer-menu",
     cart: "drawer-cart",
     filters: "sheet-filters",
+    rate: "sheet-rate-seller",
     favorites: () => switchView("favorites"),
   };
 
@@ -721,6 +835,10 @@
         renderCategories();
         switchView("home");
         renderGrid();
+      } else if (menuType === "seller_portal") {
+        window.location.href = "vendedor.html";
+      } else if (menuType === "rate") {
+        openPanel("sheet-rate-seller");
       } else {
         showInfoPage(menuLabel);
       }
@@ -733,6 +851,20 @@
       const fav = e.target.closest("[data-fav]");
       const shareBtn = e.target.closest("[data-share]");
       const detail = e.target.closest("[data-detail]");
+      const viewSeller = e.target.closest("[data-view-seller]");
+      const openRate = e.target.closest("[data-open-rate]");
+
+      if (viewSeller) {
+        renderSellerStore(viewSeller.dataset.viewSeller);
+        return;
+      }
+
+      if (openRate) {
+        openPanel("sheet-rate-seller");
+        const orderInput = $("#rate-order-id");
+        if (orderInput) orderInput.focus();
+        return;
+      }
 
       if (add) {
         const prod = Store.getProduct(add.dataset.add);
@@ -757,6 +889,7 @@
         }
       } else if (fav) {
         const active = Store.toggleFavorite(fav.dataset.fav);
+        Store.recordFavoriteClick(fav.dataset.fav, active);
         toast(active ? "Añadido a favoritos" : "Quitado de favoritos");
       } else if (shareBtn) {
         share(shareBtn.dataset.share);
@@ -867,6 +1000,31 @@
       renderGrid();
     });
 
+    // Formulario de Calificación Verificada por Pedido
+    $("#rating-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const orderId = $("#rate-order-id")?.value;
+      const name = $("#rate-customer-name")?.value;
+      const stars = $("#rate-stars")?.value;
+      const comment = $("#rate-comment")?.value;
+
+      const res = Store.submitVerifiedRating({
+        orderId,
+        customerName: name,
+        stars,
+        comment,
+      });
+
+      if (res.success) {
+        toast("✅ ¡Calificación verificada registrada!");
+        $("#rating-form")?.reset();
+        closeAll();
+        renderGrid();
+      } else {
+        alert(res.message);
+      }
+    });
+
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeAll();
     });
@@ -894,6 +1052,7 @@
      INIT
      ============================================================ */
   const init = () => {
+    Store.recordPageView(); // Registrar visita a la web para el panel de estadísticas
     renderCategories();
     renderSideMenu();
     renderFilters();
@@ -910,5 +1069,9 @@
     }
   };
 
-  document.addEventListener("DOMContentLoaded", init);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();

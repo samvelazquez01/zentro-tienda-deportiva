@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es" class="bg-background">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0a" />
+    <title>ZENTRO · Portal de Vendedores</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link rel="stylesheet" href="css/vendedor.css" />
+    <!-- Google Analytics Tag -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C86W6M1BSX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-C86W6M1BSX');
+    </script>
+  </head>
+  <body>
+    <!-- ===================== PANTALLA DE LOGIN VENDEDOR ===================== -->
+    <div class="seller-auth-overlay" id="seller-auth-screen">
+      <div class="seller-auth-card">
+        <div style="text-align:center;margin-bottom:24px">
+          <svg width="50" height="50" viewBox="0 0 100 100" style="margin:0 auto">
+            <rect width="100" height="100" rx="22" fill="#181818"/>
+            <path d="M 22 26 L 80 26 L 46 50 L 78 50 L 74 60 L 20 60 L 52 36 L 22 36 Z" fill="#ffffff" />
+            <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
+          </svg>
+          <h2 style="font-size:22px;font-weight:900;letter-spacing:-0.02em;margin-top:14px;color:#fff">
+            Portal de Vendedores
+          </h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:4px">
+            Ingresa con tu usuario y contraseña asignados por la administración de ZENTRO
+          </p>
+        </div>
+
+        <form id="seller-login-form" class="form-grid" style="display:flex;flex-direction:column;gap:14px">
+          <div class="field">
+            <label>Usuario o Teléfono</label>
+            <input type="text" id="seller-user-input" required placeholder="Ej. zentro o carlos" autocomplete="username" />
+          </div>
+          <div class="field">
+            <label>Contraseña</label>
+            <input type="password" id="seller-pass-input" required placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn-accent" style="width:100%;padding:14px;font-size:15px;margin-top:8px">
+            Iniciar Sesión en Mi Tienda
+          </button>
+        </form>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+          <small style="color:var(--text-muted);font-size:12px">
+            ¿No tienes cuenta de vendedor? Contacta al administrador para suscribirte y activar tu plan.
+          </small>
+          <div style="margin-top:12px">
+            <a href="index.html" class="btn-ghost" style="font-size:12px;padding:6px 12px;display:inline-block">
+              ← Volver a la Tienda Pública
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PANEL PRINCIPAL DEL VENDEDOR ===================== -->
+    <div class="seller-app" id="seller-app" style="display:none">
+      <!-- Barra superior / Header -->
+      <header class="seller-header">
+        <div class="seller-header-inner">
+          <div style="display:flex;align-items:center;gap:12px">
+            <a href="index.html" class="logo-zentro" style="gap:10px" title="Ver Tienda">
+              <svg width="34" height="34" viewBox="0 0 100 100">
+                <rect width="100" height="100" rx="18" fill="#141414"/>
+                <path d="M 22 26 L 80 26 L 46 50 L 78 50 L 74 60 L 20 60 L 52 36 L 22 36 Z" fill="#ffffff" />
+                <path d="M 36 58 L 68 34 L 54 34 L 28 54 Z" fill="#ff5500" />
+              </svg>
+              <div class="logo-zentro-text">
+                <span class="logo-zentro-title">ZENTRO</span>
+                <span class="logo-zentro-sub">MI TIENDA</span>
+              </div>
+            </a>
+            <div class="seller-badge-plan" id="header-plan-badge">Plan Cargando...</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="seller-profile-chip" id="header-profile-chip">
+              <span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg></span>
+              <div class="seller-chip-info">
+                <b id="header-seller-name">Vendedor</b>
+                <small id="header-seller-prov">Ubicación</small>
+              </div>
+            </div>
+            <a href="index.html" target="_blank" class="btn-ghost" style="font-size:12px;padding:8px 12px" title="Ver catálogo">
+              Ver Web
+            </a>
+            <button class="btn-ghost" id="seller-logout-btn" style="color:#f87171;font-size:12px;padding:8px 12px">
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Banner de Alerta de Suscripción (si está próxima a vencer o suspendida) -->
+      <div id="seller-alert-banner" style="display:none"></div>
+
+      <!-- Navegación de pestañas -->
+      <nav class="seller-nav">
+        <button class="seller-tab-btn active" data-tab="products">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15M21 8l-9 5-9-5 9-5 9 5Z"/><path d="M3 8v8l9 5 9-5V8"/></svg>
+          Mis Artículos
+        </button>
+        <button class="seller-tab-btn" data-tab="add" id="tab-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          + Subir Artículo
+        </button>
+        <button class="seller-tab-btn" data-tab="finances">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Mis Ganancias
+        </button>
+        <button class="seller-tab-btn" data-tab="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+          Mi Perfil
+        </button>
+        <button class="seller-tab-btn" data-tab="stats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Estadísticas & Reseñas
+        </button>
+      </nav>
+
+      <!-- Contenido Principal -->
+      <main class="seller-container">
+        <!-- 1. PESTAÑA: MIS ARTÍCULOS -->
+        <section class="seller-section active" id="sec-seller-products">
+          <div class="seller-quota-card" id="seller-quota-display">
+            <!-- Renderizado dinámico de la cuota del plan -->
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              <span>Inventario de Mi Tienda <span id="seller-prod-count" style="color:var(--text-muted);font-size:13px"></span></span>
+              <button class="btn-accent" id="btn-goto-add" style="padding:7px 14px;font-size:13px">+ Nuevo Artículo</button>
+            </div>
+            <div style="padding:14px 20px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border);line-height:1.5">
+              💡 <b>¿Cómo funciona tu cupo?</b> Cuando vendes un artículo, haz clic en <b>"Marcar Vendido"</b>. El sistema descontará el producto y te <b>liberará inmediatamente 1 cupo</b> para que puedas subir otro artículo en su lugar este mes.
+            </div>
+            <div class="table-wrap">
+              <table id="seller-products-table">
+                <!-- Tabla dinámica de artículos del vendedor -->
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. PESTAÑA: SUBIR / EDITAR ARTÍCULO -->
+        <section class="seller-section" id="sec-seller-add">
+          <div class="panel">
+            <div class="panel-title" id="seller-form-title">Publicar Nuevo Artículo</div>
+            
+            <!-- Aviso si se alcanzó el límite -->
+            <div id="seller-quota-limit-alert" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;margin:20px;color:#fca5a5;font-size:13px">
+              ⚠️ <b>Límite de Plan Alcanzado:</b> Has completado los artículos permitidos en tu plan. Para poder subir un nuevo artículo, debes marcar uno de tus productos actuales como <b>"Vendido"</b>, eliminarlo o solicitar al Administrador que incremente tu plan.
+            </div>
+
+            <form class="form-grid" id="seller-product-form" style="padding:20px">
+              <input type="hidden" name="id" id="prod-id-field" />
+
+              <div class="field">
+                <label>Marca *</label>
+                <input name="brand" required placeholder="Nike, Jordan, Puma, Adidas, New Era, Under Armour..." />
+              </div>
+              <div class="field">
+                <label>Modelo / Nombre del Artículo *</label>
+                <input name="model" required placeholder="Nombre del artículo o producto..." />
+              </div>
+
+              <div class="field">
+                <label>Categoría</label>
+                <select name="category">
+                  <option value="Baloncesto">Baloncesto</option>
+                  <option value="Tenis Deportivo">Tenis Deportivo</option>
+                  <option value="Ropa Deportiva">Ropa Deportiva</option>
+                  <option value="Gorras">Gorras</option>
+                  <option value="Accesorios">Accesorios</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Precio de Compra / Costo ($) *</label>
+                <input name="costPrice" id="seller-cost-price" type="number" step="0.01" required placeholder="120.00" />
+                <small style="color:var(--text-muted);font-size:11px">Lo que te costó el artículo para calcular tu ganancia real</small>
+              </div>
+
+              <div class="field">
+                <label>Precio de Venta al Cliente ($) *</label>
+                <input name="price" id="seller-price" type="number" step="0.01" required placeholder="199.99" />
+                <small id="seller-profit-preview" style="color:#22c55e;font-size:11px;font-weight:700">Ganancia estimada: $0.00 (0% margen)</small>
+              </div>
+
+              <div class="field">
+                <label>Stock Disponible (Unidades) *</label>
+                <input name="stock" type="number" min="0" required placeholder="5" value="1" />
+              </div>
+
+              <div class="field">
+                <label>Estado / Condición</label>
+                <select name="condition">
+                  <option value="Nuevo">Nuevo</option>
+                  <option value="Como nuevo">Como nuevo</option>
+                  <option value="Usado">Usado</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Color / Edición</label>
+                <input name="color" placeholder="Rojo Neón / Negro / Azul..." />
+              </div>
+
+              <div class="field">
+                <label>Género</label>
+                <select name="gender">
+                  <option value="Unisex">Unisex</option>
+                  <option value="Hombre">Hombre</option>
+                  <option value="Mujer">Mujer</option>
+                </select>
+              </div>
+
+              <div class="field full">
+                <label>Tallas Disponibles (separadas por comas)</label>
+                <input name="sizes" id="seller-sizes-input" placeholder="8, 8.5, 9, 9.5, 10, 10.5, 11, 12 o S, M, L..." />
+                <div class="quick-size-btns" style="margin-top:6px">
+                  <button type="button" class="quick-size-btn" data-preset="sneakers">Sneakers US (8-12)</button>
+                  <button type="button" class="quick-size-btn" data-preset="clothing">Ropa (S, M, L, XL)</button>
+                  <button type="button" class="quick-size-btn" data-preset="one">Ajustable / Única</button>
+                </div>
+              </div>
+
+              <div class="field full">
+                <label>Descripción del Artículo</label>
+                <textarea name="description" placeholder="Detalles de autenticidad, calidad, tela, suela, materiales..." rows="3"></textarea>
+              </div>
+
+              <!-- FOTOS CON REGLA ESTRICTA DE MÁXIMO 3 FOTOS -->
+              <div class="field full">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <label style="margin:0;font-weight:700">Fotos del Artículo (Máximo 3 imágenes)</label>
+                  <span style="font-size:12px;font-weight:800;color:var(--accent)" id="seller-img-counter">0 / 3 fotos</span>
+                </div>
+                
+                <label class="dropzone" for="seller-img-input" id="seller-dropzone">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/></svg>
+                  <div>
+                    <b>Seleccionar o arrastrar hasta 3 fotos</b><br />
+                    <small>Se comprimen automáticamente para máxima rapidez de carga</small>
+                  </div>
+                  <input id="seller-img-input" type="file" accept="image/*" multiple hidden />
+                </label>
+
+                <div style="display:flex;gap:8px;margin-top:10px">
+                  <input type="url" id="seller-img-url-input" placeholder="O pega el enlace URL de una imagen" style="flex:1" class="field input" />
+                  <button type="button" class="btn-ghost" id="seller-add-url-btn">+ Agregar URL</button>
+                </div>
+
+                <!-- Previews de las 3 imágenes -->
+                <div class="previews" id="seller-img-previews" style="margin-top:14px"></div>
+              </div>
+
+              <div class="form-actions full" style="display:flex;gap:12px;justify-content:flex-end">
+                <button type="button" class="btn-ghost" id="seller-cancel-form">Cancelar</button>
+                <button type="submit" class="btn-accent" id="seller-submit-prod-btn">Publicar Artículo</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- 3. NUEVA PESTAÑA: MIS GANANZAS (FINANZAS DEL VENDEDOR) -->
+        <section class="seller-section" id="sec-seller-finances">
+          <div style="margin-bottom:20px">
+            <h2 style="font-size:18px;color:#fff;margin:0 0 4px">Mis Ganancias y Rendimiento de Ventas</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin:0">Control detallado de tus ganancias netas calculadas según tu precio de costo y venta de cada artículo.</p>
+          </div>
+
+          <div class="stats" id="seller-finances-metrics-grid" style="margin-bottom:24px">
+            <!-- Renderizado dinámico de tarjetas de finanzas del vendedor -->
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">
+              <span>Historial de Artículos Vendidos & Ganancias Netas</span>
+            </div>
+            <div style="padding:14px 20px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">
+              Calculado automáticamente sobre cada artículo que marcas como <b>"Vendido"</b> (Precio de Venta − Precio de Costo = Tu Ganancia Neta).
+            </div>
+            <div class="table-wrap">
+              <table id="seller-sold-history-table">
+                <!-- Tabla dinámica de artículos vendidos con ganancia -->
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. PESTAÑA: MI PERFIL -->
+        <section class="seller-section" id="sec-seller-profile">
+          <div class="panel">
+            <div class="panel-title">Mi Perfil de Vendedor & Contacto</div>
+            <form id="seller-profile-form" class="form-grid" style="padding:20px">
+              <div class="field">
+                <label>Nombre Comercial o Personal</label>
+                <input name="name" id="prof-name" required />
+              </div>
+              <div class="field">
+                <label>Número de WhatsApp (Donde te escribirán los clientes)</label>
+                <input name="phone" id="prof-phone" required placeholder="Ej. 18091234567" />
+                <small style="color:var(--text-muted);font-size:11px">Incluye código de país (1 para RD/EE.UU.), sin guiones</small>
+              </div>
+              <div class="field">
+                <label>Lugar de Procedencia / Provincia (Para los Filtros)</label>
+                <select name="province" id="prof-province" required>
+                  <option value="Santo Domingo">Santo Domingo</option>
+                  <option value="Distrito Nacional">Distrito Nacional</option>
+                  <option value="Santiago">Santiago</option>
+                  <option value="La Vega">La Vega</option>
+                  <option value="San Cristóbal">San Cristóbal</option>
+                  <option value="Puerto Plata">Puerto Plata</option>
+                  <option value="San Pedro de Macorís">San Pedro de Macorís</option>
+                  <option value="La Romana">La Romana</option>
+                  <option value="Punta Cana / Higüey">Punta Cana / Higüey</option>
+                  <option value="Duarte / San Francisco">Duarte / San Francisco</option>
+                  <option value="Espaillat / Moca">Espaillat / Moca</option>
+                  <option value="Otra Provincia">Otra Provincia</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Usuario de Acceso</label>
+                <input name="username" id="prof-username" readonly style="opacity:0.7" />
+                <small style="color:var(--text-muted);font-size:11px">Asignado por el Administrador</small>
+              </div>
+              <div class="field">
+                <label>Cambiar Mi Contraseña</label>
+                <input type="password" name="password" id="prof-password" placeholder="Escribe nueva contraseña" />
+              </div>
+              <div class="field full">
+                <label>Descripción / Especialidad de tu Tienda</label>
+                <input name="notes" id="prof-notes" placeholder="Ej. Especialista en artículos deportivos originales, calzado, ropa y accesorios." />
+              </div>
+              <div class="form-actions full" style="display:flex;justify-content:flex-end">
+                <button type="submit" class="btn-accent">Guardar Cambios de Perfil</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- 5. PESTAÑA: ESTADÍSTICAS & RESEÑAS -->
+        <section class="seller-section" id="sec-seller-stats">
+          <div class="stats" id="seller-stats-cards">
+            <!-- Estadísticas en tiempo real -->
+          </div>
+
+          <div class="panel" style="margin-top:20px">
+            <div class="panel-title">
+              <span>Calificaciones y Opiniones Verificadas de Compradores</span>
+              <span class="seller-badge-rating" id="seller-avg-rating-badge">★ 5.0</span>
+            </div>
+            <div style="padding:14px 20px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">
+              🛡️ <b>Sistema Antifraude y Transparente:</b> Solo pueden calificar clientes que hayan completado un pedido por WhatsApp con código de verificación. Así se evitan valoraciones falsas de competidores.
+            </div>
+            <div style="padding:20px" id="seller-ratings-list">
+              <!-- Lista de calificaciones -->
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Firebase SDK (Firestore en tiempo real) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/vendedor.js"></script>
+  </body>
+</html>
