@@ -180,14 +180,58 @@
               </div>
 
               <div class="field">
-                <label>Categoría</label>
-                <select name="category">
-                  <option value="Baloncesto">Baloncesto</option>
-                  <option value="Tenis Deportivo">Tenis Deportivo</option>
+                <label>Categoría Principal *</label>
+                <select name="category" id="seller-category" required>
+                  <option value="Tenis Deportivo">Tenis Deportivo (Calzado)</option>
+                  <option value="Baloncesto">Tenis de Baloncesto</option>
                   <option value="Ropa Deportiva">Ropa Deportiva</option>
                   <option value="Gorras">Gorras</option>
                   <option value="Accesorios">Accesorios</option>
                 </select>
+              </div>
+
+              <div class="field">
+                <label>Deporte o Disciplina</label>
+                <select name="sport" id="seller-sport">
+                  <option value="Baloncesto">Baloncesto</option>
+                  <option value="Running / Correr">Running / Correr</option>
+                  <option value="Entrenamiento / Gym">Entrenamiento / Gym</option>
+                  <option value="Casual / Urbano">Casual / Urbano</option>
+                  <option value="Béisbol">Béisbol</option>
+                  <option value="Fútbol">Fútbol</option>
+                  <option value="Multideporte / General">Multideporte / General</option>
+                </select>
+              </div>
+
+              <div class="field full" style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+                <label style="font-size:12px;font-weight:700;display:block;margin-bottom:8px">
+                  Categorías en las que aparecerá tu artículo:
+                </label>
+                <div style="display:flex;flex-wrap:wrap;gap:12px">
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                    <input type="checkbox" class="seller-cat-check" value="Baloncesto" id="seller-cat-baloncesto" />
+                    <span>Baloncesto</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                    <input type="checkbox" class="seller-cat-check" value="Tenis Deportivo" id="seller-cat-deportivo" />
+                    <span>Tenis Deportivo</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                    <input type="checkbox" class="seller-cat-check" value="Ropa Deportiva" id="seller-cat-ropa" />
+                    <span>Ropa Deportiva</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                    <input type="checkbox" class="seller-cat-check" value="Gorras" id="seller-cat-gorras" />
+                    <span>Gorras</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                    <input type="checkbox" class="seller-cat-check" value="Accesorios" id="seller-cat-accesorios" />
+                    <span>Accesorios</span>
+                  </label>
+                </div>
+                <small style="color:var(--text-muted);display:block;margin-top:6px;font-size:11px">
+                  💡 Si es calzado de baloncesto, se incluirá automáticamente tanto en <b>Baloncesto</b> como en <b>Tenis Deportivo</b>.
+                </small>
               </div>
 
               <div class="field">

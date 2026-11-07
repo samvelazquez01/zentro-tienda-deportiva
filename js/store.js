@@ -32,6 +32,7 @@ const Store = (() => {
     pickupAddress: "Santo Domingo, República Dominicana",
     welcomeMsg: "¡Hola! Quiero hacer el siguiente pedido en ZENTRO:",
     reminderTemplate: "¡Hola [NOMBRE]! Te recordamos desde ZENTRO que el pago de suscripción de tu tienda vence el [FECHA].\n\nTu plan contratado: [PLAN] ([PRECIO]).\n\nPara renovar tu servicio y mantener visibles tus artículos en el catálogo público, realiza tu pago a nuestras cuentas bancarias:\n\n[CUENTAS]\n\nFavor enviar comprobante por este chat. ¡Muchas gracias!",
+    returnPolicy: "• Tienes un plazo de 7 días a partir de la entrega para solicitar cambio de talla o garantía por desperfecto de fábrica.\n• El calzado o prenda deportiva debe estar sin uso, en su caja/empaque original y con todas sus etiquetas.\n• Los cambios por talla están sujetos a disponibilidad en el inventario.\n• Para iniciar un cambio o devolución, escríbenos directamente a nuestro WhatsApp con tu número de pedido (#ORD-XXXX).",
   };
 
   const DEFAULT_SELLERS = [
@@ -90,6 +91,15 @@ const Store = (() => {
     } catch (e) {
       console.error("Error guardando en localStorage", key, e);
     }
+  };
+
+  const getDeviceId = () => {
+    let id = localStorage.getItem("zentro_device_id");
+    if (!id) {
+      id = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 9);
+      localStorage.setItem("zentro_device_id", id);
+    }
+    return id;
   };
 
   // Inicialización local de arranque
@@ -297,6 +307,87 @@ const Store = (() => {
       },
       (err) => console.warn("Firestore subscription_payments aviso:", err.message)
     );
+
+    // 6. Escuchar Ajustes Generales y Políticas en la nube (Sincronizado entre dispositivos)
+    db.collection("settings").doc("main").onSnapshot(
+      (doc) => {
+        if (doc.exists) {
+          const cloudStt = doc.data();
+          if (cloudStt) {
+            write(KEYS.settings, { ...getSettings(), ...cloudStt });
+            emit();
+          }
+        } else {
+          db.collection("settings").doc("main").set(getSettings()).catch(() => {});
+        }
+      },
+      (err) => console.warn("Firestore settings aviso:", err.message)
+    );
+
+    // 7. Escuchar Analíticas Globales y Tráfico Real en la nube
+    db.collection("analytics").doc("overview").onSnapshot(
+      (doc) => {
+        if (doc.exists) {
+          const cloudAna = doc.data();
+          if (cloudAna) {
+            const current = getAnalytics();
+            const merged = {
+              ...current,
+              ...cloudAna,
+              pageViews: Math.max(Number(cloudAna.pageViews || 0), Number(current.pageViews || 0)),
+              uniqueVisitors: Math.max(Number(cloudAna.uniqueVisitors || 0), Number(current.uniqueVisitors || 0)),
+              whatsappClicksTotal: Math.max(Number(cloudAna.whatsappClicksTotal || 0), Number(current.whatsappClicksTotal || 0)),
+              favoritesTotal: Number(cloudAna.favoritesTotal !== undefined ? cloudAna.favoritesTotal : current.favoritesTotal || 0),
+              productFavorites: { ...(current.productFavorites || {}), ...(cloudAna.productFavorites || {}) },
+              whatsappClicksBySeller: { ...(current.whatsappClicksBySeller || {}), ...(cloudAna.whatsappClicksBySeller || {}) },
+              whatsappClicksByProduct: { ...(current.whatsappClicksByProduct || {}), ...(cloudAna.whatsappClicksByProduct || {}) },
+            };
+            write(KEYS.analytics, merged);
+            emit();
+          }
+        }
+      },
+      (err) => console.warn("Firestore analytics aviso:", err.message)
+    );
+
+    // 8. Escuchar Favoritos de TODOS los dispositivos en tiempo real para estadísticas 100% reales
+    db.collection("devices_favorites").onSnapshot(
+      (snapshot) => {
+        if (snapshot && !snapshot.empty) {
+          let totalCount = 0;
+          const prodCounts = {};
+          snapshot.forEach((d) => {
+            const data = d.data();
+            const favs = Array.isArray(data.favorites) ? data.favorites : [];
+            totalCount += favs.length;
+            favs.forEach((pid) => {
+              prodCounts[pid] = (prodCounts[pid] || 0) + 1;
+            });
+          });
+          const ana = getAnalytics();
+          ana.favoritesTotal = totalCount;
+          ana.productFavorites = prodCounts;
+          write(KEYS.analytics, ana);
+          // Actualizar documento overview en la nube para consolidación
+          db.collection("analytics").doc("overview").set({
+            favoritesTotal: totalCount,
+            productFavorites: prodCounts,
+          }, { merge: true }).catch(() => {});
+          emit();
+        }
+      },
+      (err) => console.warn("Firestore devices_favorites aviso:", err.message)
+    );
+
+    // Sincronizar inmediatamente los favoritos locales de este dispositivo a la nube
+    const devId = getDeviceId();
+    const myFavs = getFavorites();
+    db.collection("devices_favorites").doc(devId).set({
+      deviceId: devId,
+      favorites: myFavs,
+      count: myFavs.length,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true }).catch(() => {});
   };
 
   /* Función para forzar subida y sincronización de todo a Firebase */
@@ -591,6 +682,11 @@ const Store = (() => {
     const updated = { ...getSettings(), ...newSettings };
     write(KEYS.settings, updated);
     emit();
+
+    if (window.FIREBASE && window.FIREBASE.db) {
+      window.FIREBASE.db.collection("settings").doc("main").set(updated, { merge: true }).catch((e) => console.warn("Error nube settings:", e));
+    }
+
     return updated;
   };
 
@@ -673,8 +769,26 @@ const Store = (() => {
 
   const saveProduct = (product) => {
     const products = getProducts();
+    const mainCategory = product.category || "Tenis Deportivo";
+    let categoriesList = Array.isArray(product.categories) ? [...product.categories] : [];
+    if (!categoriesList.includes(mainCategory)) {
+      categoriesList.unshift(mainCategory);
+    }
+    // Regla de negocio: Un tenis de baloncesto es deportivo también
+    if (mainCategory === "Baloncesto" || product.sport === "Baloncesto" || categoriesList.includes("Baloncesto")) {
+      if (!categoriesList.includes("Tenis Deportivo")) {
+        categoriesList.push("Tenis Deportivo");
+      }
+      if (!categoriesList.includes("Baloncesto")) {
+        categoriesList.push("Baloncesto");
+      }
+    }
+
     const clean = {
       ...product,
+      category: mainCategory,
+      categories: categoriesList,
+      sport: product.sport || (categoriesList.includes("Baloncesto") ? "Baloncesto" : "General"),
       price: Number(product.price) || 0,
       costPrice: Number(product.costPrice) || 0,
       stock: Number(product.stock) || 0,
@@ -1183,11 +1297,25 @@ const Store = (() => {
   const toggleFavorite = (id) => {
     const favs = getFavorites();
     const i = favs.indexOf(id);
-    if (i >= 0) favs.splice(i, 1);
-    else favs.push(id);
+    const isNowFav = i < 0;
+    if (isNowFav) favs.push(id);
+    else favs.splice(i, 1);
     write(KEYS.favorites, favs);
     emit();
-    return favs.includes(id);
+
+    // Sincronizar inmediatamente la lista de favoritos de este dispositivo a la nube
+    const devId = getDeviceId();
+    if (window.FIREBASE && window.FIREBASE.db) {
+      window.FIREBASE.db.collection("devices_favorites").doc(devId).set({
+        deviceId: devId,
+        favorites: favs,
+        count: favs.length,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true }).catch(() => {});
+    }
+
+    recordFavoriteClick(id, isNowFav);
+    return isNowFav;
   };
 
   /* ---------------- ANALÍTICAS Y FLUJO DE TIENDA ---------------- */
@@ -1213,9 +1341,13 @@ const Store = (() => {
     data.dailyViews = data.dailyViews || {};
     data.dailyViews[today] = (data.dailyViews[today] || 0) + 1;
 
-    // Visitante único por sesión
-    if (!sessionStorage.getItem("zentro_visit_counted")) {
+    // Conteo de visitantes únicos por dispositivo
+    let isNewDevice = false;
+    if (!localStorage.getItem("zentro_device_registered")) {
+      localStorage.setItem("zentro_device_registered", "1");
       data.uniqueVisitors = (data.uniqueVisitors || 0) + 1;
+      isNewDevice = true;
+    } else if (!sessionStorage.getItem("zentro_visit_counted")) {
       sessionStorage.setItem("zentro_visit_counted", "1");
     }
 
@@ -1229,9 +1361,16 @@ const Store = (() => {
       });
     }
 
-    // Sincronizar analítica a Firestore en la nube
-    if (window.FIREBASE && window.FIREBASE.db) {
-      window.FIREBASE.db.collection("analytics").doc("overview").set(data, { merge: true }).catch(() => {});
+    // Atomic increment en Firebase Firestore en la nube para tráfico 100% real y sin sobreescrituras
+    if (window.FIREBASE && window.FIREBASE.db && typeof firebase !== "undefined" && firebase.firestore) {
+      const payload = {
+        pageViews: firebase.firestore.FieldValue.increment(1),
+        [`dailyViews.${today}`]: firebase.firestore.FieldValue.increment(1),
+      };
+      if (isNewDevice) {
+        payload.uniqueVisitors = firebase.firestore.FieldValue.increment(1);
+      }
+      window.FIREBASE.db.collection("analytics").doc("overview").set(payload, { merge: true }).catch(() => {});
     }
   };
 
@@ -1259,22 +1398,21 @@ const Store = (() => {
       });
     }
 
-    if (window.FIREBASE && window.FIREBASE.db) {
-      window.FIREBASE.db.collection("analytics").doc("overview").set(data, { merge: true }).catch(() => {});
+    if (window.FIREBASE && window.FIREBASE.db && typeof firebase !== "undefined" && firebase.firestore) {
+      const payload = {
+        whatsappClicksTotal: firebase.firestore.FieldValue.increment(1),
+      };
+      if (sellerId) {
+        payload[`whatsappClicksBySeller.${sellerId}`] = firebase.firestore.FieldValue.increment(1);
+      }
+      if (productId) {
+        payload[`whatsappClicksByProduct.${productId}`] = firebase.firestore.FieldValue.increment(1);
+      }
+      window.FIREBASE.db.collection("analytics").doc("overview").set(payload, { merge: true }).catch(() => {});
     }
   };
 
   const recordFavoriteClick = (productId, isFav) => {
-    const data = getAnalytics();
-    if (isFav) {
-      data.favoritesTotal = (data.favoritesTotal || 0) + 1;
-      if (productId) {
-        data.productFavorites = data.productFavorites || {};
-        data.productFavorites[productId] = (data.productFavorites[productId] || 0) + 1;
-      }
-    }
-    write(KEYS.analytics, data);
-
     if (typeof window.gtag === "function" && isFav) {
       window.gtag("event", "add_to_wishlist", {
         product_id: productId,

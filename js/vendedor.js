@@ -344,7 +344,8 @@
     form.id.value = p.id;
     form.brand.value = p.brand || "";
     form.model.value = p.model || "";
-    form.category.value = p.category || "Baloncesto";
+    form.category.value = p.category || "Tenis Deportivo";
+    if (form.sport) form.sport.value = p.sport || (p.category === "Baloncesto" ? "Baloncesto" : "Multideporte / General");
     if (form.costPrice) form.costPrice.value = p.costPrice || "";
     form.price.value = p.price || "";
     form.stock.value = p.stock || 1;
@@ -353,6 +354,18 @@
     form.gender.value = p.gender || "Unisex";
     form.sizes.value = (p.sizes || []).join(", ");
     form.description.value = p.description || "";
+
+    // Sincronizar checkboxes de categorías
+    const pCats = Array.isArray(p.categories) ? p.categories : [p.category].filter(Boolean);
+    $$(".seller-cat-check").forEach((cb) => {
+      cb.checked = pCats.includes(cb.value);
+    });
+    if (p.category === "Baloncesto" || p.sport === "Baloncesto" || pCats.includes("Baloncesto")) {
+      const bCb = $("#seller-cat-baloncesto");
+      const dCb = $("#seller-cat-deportivo");
+      if (bCb) bCb.checked = true;
+      if (dCb) dCb.checked = true;
+    }
 
     currentImages = Array.isArray(p.images) ? [...p.images.slice(0, 3)] : [];
     renderImgPreviews();
@@ -368,6 +381,7 @@
     form.reset();
     form.id.value = "";
     if (form.costPrice) form.costPrice.value = "";
+    $$(".seller-cat-check").forEach((cb) => (cb.checked = false));
     currentImages = [];
     renderImgPreviews();
     updateSellerProfitPreview();
@@ -636,6 +650,29 @@
       });
     });
 
+    // 7.1 Ayudante de categorías para vendedor
+    $("#seller-category")?.addEventListener("change", (e) => {
+      if (e.target.value === "Baloncesto") {
+        const b = $("#seller-cat-baloncesto");
+        const d = $("#seller-cat-deportivo");
+        if (b) b.checked = true;
+        if (d) d.checked = true;
+        if ($("#seller-sport")) $("#seller-sport").value = "Baloncesto";
+      } else if (e.target.value === "Tenis Deportivo") {
+        const d = $("#seller-cat-deportivo");
+        if (d) d.checked = true;
+      }
+    });
+
+    $("#seller-sport")?.addEventListener("change", (e) => {
+      if (e.target.value === "Baloncesto") {
+        const b = $("#seller-cat-baloncesto");
+        const d = $("#seller-cat-deportivo");
+        if (b) b.checked = true;
+        if (d) d.checked = true;
+      }
+    });
+
     // 8. Enviar formulario de producto
     $("#seller-product-form")?.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -659,12 +696,22 @@
         .map((s) => s.trim())
         .filter(Boolean);
 
+      const selectedCats = $$(".seller-cat-check:checked").map((cb) => cb.value);
+      const mainCategory = form.category.value || "Tenis Deportivo";
+      if (!selectedCats.includes(mainCategory)) selectedCats.unshift(mainCategory);
+      if (mainCategory === "Baloncesto" || form.sport?.value === "Baloncesto" || selectedCats.includes("Baloncesto")) {
+        if (!selectedCats.includes("Tenis Deportivo")) selectedCats.push("Tenis Deportivo");
+        if (!selectedCats.includes("Baloncesto")) selectedCats.push("Baloncesto");
+      }
+
       const productData = {
         id: id,
         sellerId: currentSeller.id,
         brand: form.brand.value.trim(),
         model: form.model.value.trim(),
-        category: form.category.value,
+        category: mainCategory,
+        categories: selectedCats,
+        sport: form.sport?.value || (selectedCats.includes("Baloncesto") ? "Baloncesto" : "General"),
         costPrice: Number(form.costPrice?.value) || 0,
         price: Number(form.price.value) || 0,
         stock: Number(form.stock.value) || 0,

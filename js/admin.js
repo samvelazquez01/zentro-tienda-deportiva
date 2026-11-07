@@ -755,6 +755,7 @@
       const st = Store.getSettings();
       if ($("#setting-bank-details")) $("#setting-bank-details").value = st.bankDetails || "";
       if ($("#setting-reminder-template")) $("#setting-reminder-template").value = st.reminderTemplate || "";
+      if ($("#setting-return-policy")) $("#setting-return-policy").value = st.returnPolicy || "";
     },
   };
 
@@ -857,7 +858,8 @@
     form.id.value = p.id;
     form.brand.value = p.brand;
     form.model.value = p.model;
-    form.category.value = p.category || "Baloncesto";
+    form.category.value = p.category || "Tenis Deportivo";
+    if (form.sport) form.sport.value = p.sport || (p.category === "Baloncesto" ? "Baloncesto" : "Multideporte / General");
     form.sellerId.value = p.sellerId || "v1";
     form.costPrice.value = p.costPrice || "";
     form.price.value = p.price;
@@ -869,6 +871,19 @@
     form.description.value = p.description || "";
     form.features.value = (p.features || []).join(", ");
     if ($("#form-is-featured")) $("#form-is-featured").checked = Boolean(p.isFeatured);
+
+    // Sincronizar checkboxes de categorías
+    const pCats = Array.isArray(p.categories) ? p.categories : [p.category].filter(Boolean);
+    $$(".admin-cat-check").forEach((cb) => {
+      cb.checked = pCats.includes(cb.value);
+    });
+    if (p.category === "Baloncesto" || p.sport === "Baloncesto" || pCats.includes("Baloncesto")) {
+      const bCb = $("#cat-check-baloncesto");
+      const dCb = $("#cat-check-deportivo");
+      if (bCb) bCb.checked = true;
+      if (dCb) dCb.checked = true;
+    }
+
     currentImages = [...(p.images || []).slice(0, 3)];
     renderImgPreviews();
     updateProfitPreview();
@@ -881,12 +896,38 @@
     form.reset();
     form.id.value = "";
     if ($("#form-is-featured")) $("#form-is-featured").checked = false;
+    $$(".admin-cat-check").forEach((cb) => (cb.checked = false));
     currentImages = [];
     renderImgPreviews();
     updateProfitPreview();
     const titleEl = $("#form-title");
     if (titleEl) titleEl.textContent = "Agregar Nuevo Calzado o Artículo";
   };
+
+  // Ayudante interactivo: Baloncesto siempre es también Tenis Deportivo
+  $("#form-category")?.addEventListener("change", (e) => {
+    const val = e.target.value;
+    if (val === "Baloncesto") {
+      const bCb = $("#cat-check-baloncesto");
+      const dCb = $("#cat-check-deportivo");
+      if (bCb) bCb.checked = true;
+      if (dCb) dCb.checked = true;
+      if ($("#form-sport")) $("#form-sport").value = "Baloncesto";
+    } else if (val === "Tenis Deportivo") {
+      const dCb = $("#cat-check-deportivo");
+      if (dCb) dCb.checked = true;
+    }
+  });
+
+  $("#form-sport")?.addEventListener("change", (e) => {
+    const val = e.target.value;
+    if (val === "Baloncesto") {
+      const bCb = $("#cat-check-baloncesto");
+      const dCb = $("#cat-check-deportivo");
+      if (bCb) bCb.checked = true;
+      if (dCb) dCb.checked = true;
+    }
+  });
 
   form?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -896,11 +937,25 @@
       .map((s) => s.trim())
       .filter(Boolean);
 
+    // Categorías seleccionadas
+    const selectedCats = $$(".admin-cat-check:checked").map((cb) => cb.value);
+    const mainCategory = data.category || "Tenis Deportivo";
+    if (!selectedCats.includes(mainCategory)) {
+      selectedCats.unshift(mainCategory);
+    }
+    // Regla: si es baloncesto, incluir también tenis deportivo
+    if (mainCategory === "Baloncesto" || data.sport === "Baloncesto" || selectedCats.includes("Baloncesto")) {
+      if (!selectedCats.includes("Tenis Deportivo")) selectedCats.push("Tenis Deportivo");
+      if (!selectedCats.includes("Baloncesto")) selectedCats.push("Baloncesto");
+    }
+
     const product = {
       id: data.id || "p" + Date.now(),
       brand: (data.brand || "").trim(),
       model: (data.model || "").trim(),
-      category: data.category,
+      category: mainCategory,
+      categories: selectedCats,
+      sport: data.sport || (selectedCats.includes("Baloncesto") ? "Baloncesto" : "General"),
       sellerId: data.sellerId,
       costPrice: parseFloat(data.costPrice) || 0,
       price: parseFloat(data.price) || 0,
@@ -1307,6 +1362,23 @@
     await Store.setMasterPin(newP);
     toast("✅ ¡Contraseña actualizada y guardada en Firebase!");
     $("#admin-change-password-form").reset();
+  });
+
+  /* Formulario políticas de devolución (Garantías en carrito) */
+  $("#admin-return-policy-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const policy = ($("#setting-return-policy")?.value || "").trim();
+    Store.saveSettings({ returnPolicy: policy });
+    toast("✅ ¡Políticas de devolución guardadas y sincronizadas con el carrito!");
+  });
+
+  /* Formulario cuentas bancarias y recordatorios */
+  $("#admin-banking-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const bankDetails = ($("#setting-bank-details")?.value || "").trim();
+    const reminderTemplate = ($("#setting-reminder-template")?.value || "").trim();
+    Store.saveSettings({ bankDetails, reminderTemplate });
+    toast("✅ ¡Cuentas bancarias y plantilla de WhatsApp guardadas!");
   });
 
   /* Botones de cerrar sesión y cambio de PIN */

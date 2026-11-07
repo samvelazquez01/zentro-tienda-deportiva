@@ -108,12 +108,34 @@
   /* ============================================================
      FILTRADO + BÚSQUEDA (Solo muestra productos con stock > 0)
      ============================================================ */
+  const productMatchesCategory = (p, cat) => {
+    if (!cat || cat === "Todos") return true;
+    if (p.category === cat) return true;
+    if (Array.isArray(p.categories) && p.categories.includes(cat)) return true;
+    // Regla de negocio solicitada: Un tenis de baloncesto es deportivo también
+    if (cat === "Tenis Deportivo") {
+      if (p.category === "Baloncesto" || p.sport === "Baloncesto") return true;
+      if (Array.isArray(p.categories) && p.categories.includes("Baloncesto")) return true;
+    }
+    // Pero uno deportivo no necesariamente es de baloncesto:
+    if (cat === "Baloncesto") {
+      return (
+        p.category === "Baloncesto" ||
+        p.sport === "Baloncesto" ||
+        (Array.isArray(p.categories) && p.categories.includes("Baloncesto"))
+      );
+    }
+    return false;
+  };
+
   const matchesSearch = (p, q) => {
     if (!q) return true;
+    const catList = Array.isArray(p.categories) ? p.categories.join(" ") : "";
     const haystack = [
       p.brand,
       p.model,
       p.category,
+      catList,
       p.sport,
       p.color,
       p.condition,
@@ -129,47 +151,53 @@
       .every((term) => haystack.includes(term));
   };
 
-  const getFiltered = () => {
+  const matchesProductFilters = (p) => {
     const f = state.filters;
-    // REGLA CLAVE: Solo productos válidos en existencia (stock > 0, de vendedores activos no suspendidos)
-    let list = Store.getPublicProducts().filter((p) => {
-      const seller = Store.getSeller(p.sellerId);
-      if (state.category !== "Todos" && p.category !== state.category) return false;
-      if (!matchesSearch(p, state.query)) return false;
-      if (f.brand && p.brand !== f.brand) return false;
-      if (f.condition && p.condition !== f.condition) return false;
-      if (f.color && p.color !== f.color) return false;
-      if (f.gender && p.gender !== f.gender) return false;
-      if (f.sport && p.sport !== f.sport) return false;
-      if (f.size && (!p.sizes || !p.sizes.includes(f.size))) return false;
-      if (f.province && seller && seller.province !== f.province) return false;
-      if (f.sellerId && p.sellerId !== f.sellerId) return false;
-      if (f.min !== "" && p.price < Number(f.min)) return false;
-      if (f.max !== "" && p.price > Number(f.max)) return false;
-      return true;
-    });
+    const seller = Store.getSeller(p.sellerId);
+    if (!productMatchesCategory(p, state.category)) return false;
+    if (!matchesSearch(p, state.query)) return false;
+    if (f.brand && p.brand !== f.brand) return false;
+    if (f.condition && p.condition !== f.condition) return false;
+    if (f.color && p.color !== f.color) return false;
+    if (f.gender && p.gender !== f.gender) return false;
+    if (f.sport && p.sport !== f.sport && !(f.sport === "Baloncesto" && productMatchesCategory(p, "Baloncesto"))) return false;
+    if (f.size && (!p.sizes || !p.sizes.includes(f.size))) return false;
+    if (f.province && seller && seller.province !== f.province) return false;
+    if (f.sellerId && p.sellerId !== f.sellerId) return false;
+    if (f.min !== "" && p.price < Number(f.min)) return false;
+    if (f.max !== "" && p.price > Number(f.max)) return false;
+    return true;
+  };
 
+  const sortProductList = (list) => {
+    const f = state.filters;
+    const copy = [...list];
     switch (f.sort) {
       case "precio-asc":
-        list.sort((a, b) => a.price - b.price);
+        copy.sort((a, b) => a.price - b.price);
         break;
       case "precio-desc":
-        list.sort((a, b) => b.price - a.price);
+        copy.sort((a, b) => b.price - a.price);
         break;
       case "populares":
-        list.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        copy.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
         break;
       default:
         // Mantener destacados primero
-        list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+        copy.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
     }
-    return list;
+    return copy;
+  };
+
+  const getFiltered = () => {
+    return sortProductList(Store.getPublicProducts().filter(matchesProductFilters));
   };
 
   /* ============================================================
      RENDER: Tarjeta de Producto y Catálogo
      ============================================================ */
-  const cardHTML = (p) => {
+  const cardHTML = (p, options = {}) => {
+    const isOutside = Boolean(options.isOutsideFilter);
     const fav = Store.isFavorite(p.id);
     const seller = Store.getSeller(p.sellerId);
     const imagesList = p.images && p.images.length > 0 ? p.images : (p.views || ["Frente"]);
@@ -185,11 +213,13 @@
       : "Disponible";
 
     const conditionBadge = `<span class="card__tag ${p.condition === "Usado" ? "used" : ""}">${p.condition || "Nuevo"}</span>`;
+    const outsideBadge = isOutside ? `<span class="card__outside-badge">Fuera del filtro</span>` : "";
 
     return `
-      <article class="card">
+      <article class="card ${isOutside ? "card--outside" : ""}">
         <div class="card__media">
           ${conditionBadge}
+          ${outsideBadge}
           <span class="card__badge-sport">${p.category || "Baloncesto"}</span>
           <button class="card__fav ${fav ? "active" : ""}" data-fav="${p.id}" aria-label="Favorito">${ICON.heart}</button>
           <div class="card__track hide-scroll" data-detail="${p.id}">${imgs}</div>
@@ -220,14 +250,67 @@
   };
 
   const renderGrid = () => {
-    const list = getFiltered();
+    const allPublic = Store.getPublicProducts();
+    const isFilterActive = state.category !== "Todos" || Boolean(state.query) || activeFilterCount() > 0;
+
     const grid = $("#product-grid");
-    $("#grid-title").textContent =
-      state.category === "Todos" ? "Todos los productos" : state.category;
-    $("#grid-count").textContent = `${list.length} en existencia`;
-    grid.innerHTML = list.length
-      ? list.map(cardHTML).join("")
-      : `<div class="empty" style="grid-column:1/-1">${ICON.empty}<p>No hay artículos disponibles con esos criterios.</p></div>`;
+    const titleEl = $("#grid-title");
+    const countEl = $("#grid-count");
+
+    if (!isFilterActive) {
+      const sorted = sortProductList(allPublic);
+      titleEl.textContent = "Todos los productos";
+      countEl.textContent = `${sorted.length} en existencia`;
+      grid.innerHTML = sorted.length
+        ? sorted.map((p) => cardHTML(p)).join("")
+        : `<div class="empty" style="grid-column:1/-1">${ICON.empty}<p>No hay artículos disponibles con esos criterios.</p></div>`;
+      return;
+    }
+
+    const matching = [];
+    const others = [];
+
+    allPublic.forEach((p) => {
+      if (matchesProductFilters(p)) {
+        matching.push(p);
+      } else {
+        others.push(p);
+      }
+    });
+
+    const sortedMatching = sortProductList(matching);
+    const sortedOthers = sortProductList(others);
+
+    const filterLabel = state.category !== "Todos" ? state.category : (state.query ? `"${state.query}"` : "Filtro aplicado");
+    titleEl.textContent = filterLabel;
+    countEl.textContent = `${sortedMatching.length} coincidencia${sortedMatching.length === 1 ? "" : "s"} directa${sortedMatching.length === 1 ? "" : "s"} · ${sortedOthers.length} otros artículos`;
+
+    let html = "";
+
+    if (sortedMatching.length > 0) {
+      html += sortedMatching.map((p) => cardHTML(p, { isOutsideFilter: false })).join("");
+    } else {
+      html += `
+        <div style="grid-column:1/-1;text-align:center;padding:24px 16px;background:var(--surface-2);border:1px dashed var(--border);border-radius:14px;margin-bottom:12px">
+          <p style="font-weight:800;color:var(--text);font-size:15px">No se encontraron artículos que coincidan con ${filterLabel}</p>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:6px">A continuación te mostramos todos los demás artículos disponibles en ZENTRO:</p>
+        </div>`;
+    }
+
+    if (sortedOthers.length > 0) {
+      html += `
+        <div class="filter-separation-divider">
+          <div class="filter-separation-line"></div>
+          <div class="filter-separation-pill">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Otros artículos disponibles · Fuera del filtro (${sortedOthers.length})</span>
+          </div>
+          <div class="filter-separation-line"></div>
+        </div>`;
+      html += sortedOthers.map((p) => cardHTML(p, { isOutsideFilter: true })).join("");
+    }
+
+    grid.innerHTML = html;
   };
 
   const renderFavorites = () => {
@@ -353,6 +436,14 @@
       })
       .join("");
     $("#cart-total").textContent = money(Store.cartTotal());
+
+    const policyTextEl = $("#cart-policy-text");
+    if (policyTextEl) {
+      const stt = Store.getSettings();
+      policyTextEl.textContent =
+        stt.returnPolicy ||
+        "• Tienes un plazo de 7 días para solicitar cambio por talla o garantía.\n• El calzado o prenda debe estar sin uso, con sus etiquetas y empaque original.\n• Para iniciar una devolución o cambio, escríbenos directamente a WhatsApp con tu número de pedido.";
+    }
   };
 
   const updateCartBadge = () => {
@@ -793,6 +884,16 @@
       state.query = e.target.value.trim();
       if (state.view !== "home") switchView("home");
       renderGrid();
+    });
+
+    $("#cart-policy-toggle-btn")?.addEventListener("click", () => {
+      const btn = $("#cart-policy-toggle-btn");
+      const drop = $("#cart-policy-dropdown");
+      if (!drop) return;
+      const isHidden = drop.hidden;
+      drop.hidden = !isHidden;
+      btn?.classList.toggle("open", isHidden);
+      btn?.setAttribute("aria-expanded", String(isHidden));
     });
 
     $("#categories")?.addEventListener("click", (e) => {
