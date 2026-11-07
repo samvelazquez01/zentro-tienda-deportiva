@@ -151,6 +151,16 @@
       .every((term) => haystack.includes(term));
   };
 
+  const activeFilterCount = () => {
+    const f = state.filters;
+    let n = 0;
+    ["brand", "condition", "color", "gender", "sport", "size", "category", "province", "sellerId"].forEach((k) => {
+      if (f[k]) n++;
+    });
+    if (f.min !== "" || f.max !== "") n++;
+    return n;
+  };
+
   const matchesProductFilters = (p) => {
     const f = state.filters;
     const seller = Store.getSeller(p.sellerId);
@@ -216,7 +226,7 @@
     const outsideBadge = isOutside ? `<span class="card__outside-badge">Fuera del filtro</span>` : "";
 
     return `
-      <article class="card ${isOutside ? "card--outside" : ""}">
+      <article class="card ${isOutside ? "card--outside" : ""}" data-card-id="${p.id}">
         <div class="card__media">
           ${conditionBadge}
           ${outsideBadge}
@@ -249,21 +259,45 @@
       </article>`;
   };
 
-  const renderGrid = () => {
+  /* ---------- Anti-parpadeo: Control de huella y actualización quirúrgica ---------- */
+  let lastGridStateHash = "";
+
+  const updateFavoriteButtons = () => {
+    const favs = Store.getFavorites();
+    $$("[data-fav]").forEach((btn) => {
+      btn.classList.toggle("active", favs.includes(btn.dataset.fav));
+    });
+  };
+
+  const renderGrid = (force = false) => {
     const allPublic = Store.getPublicProducts();
     const isFilterActive = state.category !== "Todos" || Boolean(state.query) || activeFilterCount() > 0;
 
+    const filterKey = `${state.category}__${state.query}__${JSON.stringify(state.filters)}`;
+    const prodsKey = allPublic
+      .map((p) => `${p.id}_${p.stock}_${p.price}_${p.condition}_${p.isFeatured}_${(p.images && p.images.length) || 0}_${p.sellerId}`)
+      .join(";");
+    const currentHash = `${filterKey}:::${prodsKey}`;
+
+    if (!force && currentHash === lastGridStateHash) {
+      updateFavoriteButtons();
+      return;
+    }
+    lastGridStateHash = currentHash;
+
     const grid = $("#product-grid");
+    if (!grid) return;
     const titleEl = $("#grid-title");
     const countEl = $("#grid-count");
 
     if (!isFilterActive) {
       const sorted = sortProductList(allPublic);
-      titleEl.textContent = "Todos los productos";
-      countEl.textContent = `${sorted.length} en existencia`;
+      if (titleEl) titleEl.textContent = "Todos los productos";
+      if (countEl) countEl.textContent = `${sorted.length} en existencia`;
       grid.innerHTML = sorted.length
         ? sorted.map((p) => cardHTML(p)).join("")
         : `<div class="empty" style="grid-column:1/-1">${ICON.empty}<p>No hay artículos disponibles con esos criterios.</p></div>`;
+      updateFavoriteButtons();
       return;
     }
 
@@ -282,8 +316,8 @@
     const sortedOthers = sortProductList(others);
 
     const filterLabel = state.category !== "Todos" ? state.category : (state.query ? `"${state.query}"` : "Filtro aplicado");
-    titleEl.textContent = filterLabel;
-    countEl.textContent = `${sortedMatching.length} coincidencia${sortedMatching.length === 1 ? "" : "s"} directa${sortedMatching.length === 1 ? "" : "s"} · ${sortedOthers.length} otros artículos`;
+    if (titleEl) titleEl.textContent = filterLabel;
+    if (countEl) countEl.textContent = `${sortedMatching.length} coincidencia${sortedMatching.length === 1 ? "" : "s"} directa${sortedMatching.length === 1 ? "" : "s"} · ${sortedOthers.length} otros artículos`;
 
     let html = "";
 
@@ -311,6 +345,7 @@
     }
 
     grid.innerHTML = html;
+    updateFavoriteButtons();
   };
 
   const renderFavorites = () => {
@@ -378,16 +413,6 @@
           <input type="number" inputmode="numeric" placeholder="Máx" data-price="max" value="${f.max}" />
         </div>
       </div>`;
-  };
-
-  const activeFilterCount = () => {
-    const f = state.filters;
-    let n = 0;
-    ["brand", "condition", "color", "gender", "sport", "size", "category", "province", "sellerId"].forEach((k) => {
-      if (f[k]) n++;
-    });
-    if (f.min !== "" || f.max !== "") n++;
-    return n;
   };
 
   const updateFilterBadge = () => {
@@ -899,6 +924,7 @@
     $("#categories")?.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-cat]");
       if (!btn) return;
+      if (state.category === btn.dataset.cat && state.view === "home") return;
       state.category = btn.dataset.cat;
       renderCategories();
       if (state.view !== "home") switchView("home");
@@ -989,8 +1015,10 @@
           });
         }
       } else if (fav) {
-        const active = Store.toggleFavorite(fav.dataset.fav);
-        Store.recordFavoriteClick(fav.dataset.fav, active);
+        const id = fav.dataset.fav;
+        const active = Store.toggleFavorite(id);
+        fav.classList.toggle("active", active);
+        updateFavoriteButtons();
         toast(active ? "Añadido a favoritos" : "Quitado de favoritos");
       } else if (shareBtn) {
         share(shareBtn.dataset.share);
@@ -1141,7 +1169,27 @@
   /* ============================================================
      SUSCRIPCIÓN
      ============================================================ */
-  Store.subscribe(() => {
+  Store.subscribe((events) => {
+    const evSet = events instanceof Set ? events : new Set(events ? [events] : ["general"]);
+
+    // Eventos silenciosos que no alteran el catálogo visible del cliente
+    const isOnlySilent = [...evSet].every((ev) =>
+      ["analytics", "devices_favorites", "security", "subscriptions"].includes(ev)
+    );
+    if (isOnlySilent && evSet.size > 0) return;
+
+    if (evSet.has("cart")) {
+      updateCartBadge();
+      renderCart();
+      return;
+    }
+
+    if (evSet.has("favorites")) {
+      updateFavoriteButtons();
+      if (state.view === "favorites") renderFavorites();
+      return;
+    }
+
     updateCartBadge();
     updateFilterBadge();
     renderCart();
@@ -1153,15 +1201,15 @@
      INIT
      ============================================================ */
   const init = () => {
-    Store.recordPageView(); // Registrar visita a la web para el panel de estadísticas
-    renderCategories();
-    renderSideMenu();
-    renderFilters();
-    renderGrid();
-    renderCart();
-    updateCartBadge();
-    updateFilterBadge();
-    bindEvents();
+    try { Store.recordPageView(); } catch (e) { console.warn("Aviso pageView:", e); }
+    try { renderCategories(); } catch (e) { console.warn("Aviso renderCategories:", e); }
+    try { renderSideMenu(); } catch (e) { console.warn("Aviso renderSideMenu:", e); }
+    try { renderFilters(); } catch (e) { console.warn("Aviso renderFilters:", e); }
+    try { renderGrid(true); } catch (e) { console.error("Error renderGrid:", e); }
+    try { renderCart(); } catch (e) { console.warn("Aviso renderCart:", e); }
+    try { updateCartBadge(); } catch (e) { console.warn("Aviso cartBadge:", e); }
+    try { updateFilterBadge(); } catch (e) { console.warn("Aviso filterBadge:", e); }
+    try { bindEvents(); } catch (e) { console.error("Error bindEvents:", e); }
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () =>

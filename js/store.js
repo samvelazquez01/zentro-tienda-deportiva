@@ -187,16 +187,28 @@ const Store = (() => {
     }
   };
 
-  /* ---------------- EVENTOS ---------------- */
+  /* ---------------- EVENTOS CON DEBOUNCE ANTI-PARPADEO ---------------- */
   const listeners = new Set();
   const subscribe = (fn) => listeners.add(fn);
-  const emit = () => listeners.forEach((fn) => {
-    try {
-      fn();
-    } catch (e) {
-      console.error("Error en suscriptor de Store", e);
-    }
-  });
+
+  let pendingEvents = new Set();
+  let emitTimer = null;
+  const emit = (eventType = "general") => {
+    pendingEvents.add(eventType);
+    if (emitTimer) return;
+    emitTimer = setTimeout(() => {
+      emitTimer = null;
+      const firedEvents = new Set(pendingEvents);
+      pendingEvents = new Set();
+      listeners.forEach((fn) => {
+        try {
+          fn(firedEvents);
+        } catch (e) {
+          console.error("Error en suscriptor de Store", e);
+        }
+      });
+    }, 40);
+  };
 
   /* ---------------- FIRESTORE SYNC EN TIEMPO REAL ---------------- */
   let cloudConnected = false;
@@ -222,8 +234,12 @@ const Store = (() => {
             if (s && (s.name || s.id)) cloudSellers.push(s);
           });
           if (cloudSellers.length > 0) {
-            write(KEYS.sellers, cloudSellers);
-            emit();
+            const curJson = localStorage.getItem(KEYS.sellers);
+            const newJson = JSON.stringify(cloudSellers);
+            if (curJson !== newJson) {
+              write(KEYS.sellers, cloudSellers);
+              emit("sellers");
+            }
           }
         } else {
           // Si la nube está vacía la primera vez, subir los vendedores locales iniciales
@@ -244,8 +260,12 @@ const Store = (() => {
             if (p && (p.brand || p.model || p.id)) cloudProducts.push(p);
           });
           if (cloudProducts.length > 0) {
-            write(KEYS.products, cloudProducts);
-            emit();
+            const curJson = localStorage.getItem(KEYS.products);
+            const newJson = JSON.stringify(cloudProducts);
+            if (curJson !== newJson) {
+              write(KEYS.products, cloudProducts);
+              emit("products");
+            }
           }
         } else {
           // Si la nube está vacía la primera vez, subir el catálogo inicial
@@ -264,8 +284,12 @@ const Store = (() => {
           snapshot.forEach((doc) => cloudOrders.push(doc.data()));
           // Ordenar por fecha más reciente
           cloudOrders.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-          write(KEYS.orders, cloudOrders);
-          emit();
+          const curJson = localStorage.getItem(KEYS.orders);
+          const newJson = JSON.stringify(cloudOrders);
+          if (curJson !== newJson) {
+            write(KEYS.orders, cloudOrders);
+            emit("orders");
+          }
         }
       },
       (err) => console.warn("Firestore orders aviso:", err.message)
@@ -277,11 +301,15 @@ const Store = (() => {
         if (doc.exists) {
           const sec = doc.data();
           if (sec && sec.masterPin) {
-            localStorage.setItem("zentro_master_pin", String(sec.masterPin).trim());
-            if (sec.isCustomized) {
-              localStorage.setItem("zentro_master_pin_customized", "true");
+            const curPin = localStorage.getItem("zentro_master_pin");
+            const newPin = String(sec.masterPin).trim();
+            if (curPin !== newPin) {
+              localStorage.setItem("zentro_master_pin", newPin);
+              if (sec.isCustomized) {
+                localStorage.setItem("zentro_master_pin_customized", "true");
+              }
+              emit("security");
             }
-            emit();
           }
         } else {
           // Crear documento inicial en Firebase con 2601
@@ -302,8 +330,12 @@ const Store = (() => {
           const cloudPayments = [];
           snapshot.forEach((doc) => cloudPayments.push(doc.data()));
           cloudPayments.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
-          write(KEYS.subscriptionPayments, cloudPayments);
-          emit();
+          const curJson = localStorage.getItem(KEYS.subscriptionPayments);
+          const newJson = JSON.stringify(cloudPayments);
+          if (curJson !== newJson) {
+            write(KEYS.subscriptionPayments, cloudPayments);
+            emit("subscriptions");
+          }
         }
       },
       (err) => console.warn("Firestore subscription_payments aviso:", err.message)
@@ -315,8 +347,14 @@ const Store = (() => {
         if (doc.exists) {
           const cloudStt = doc.data();
           if (cloudStt) {
-            write(KEYS.settings, { ...getSettings(), ...cloudStt });
-            emit();
+            const current = getSettings();
+            const hasChange = Object.keys(cloudStt).some(
+              (k) => JSON.stringify(cloudStt[k]) !== JSON.stringify(current[k])
+            );
+            if (hasChange) {
+              write(KEYS.settings, { ...current, ...cloudStt });
+              emit("settings");
+            }
           }
         } else {
           db.collection("settings").doc("main").set(getSettings()).catch(() => {});
@@ -344,7 +382,7 @@ const Store = (() => {
               whatsappClicksByProduct: { ...(current.whatsappClicksByProduct || {}), ...(cloudAna.whatsappClicksByProduct || {}) },
             };
             write(KEYS.analytics, merged);
-            emit();
+            emit("analytics");
           }
         }
       },
@@ -369,12 +407,7 @@ const Store = (() => {
           ana.favoritesTotal = totalCount;
           ana.productFavorites = prodCounts;
           write(KEYS.analytics, ana);
-          // Actualizar documento overview en la nube para consolidación
-          db.collection("analytics").doc("overview").set({
-            favoritesTotal: totalCount,
-            productFavorites: prodCounts,
-          }, { merge: true }).catch(() => {});
-          emit();
+          emit("devices_favorites");
         }
       },
       (err) => console.warn("Firestore devices_favorites aviso:", err.message)
@@ -1255,7 +1288,7 @@ const Store = (() => {
       cart.push({ id, size: size || null, qty: Math.max(1, qty) });
     }
     write(KEYS.cart, cart);
-    emit();
+    emit("cart");
   };
 
   const updateCartQty = (index, qty) => {
@@ -1267,19 +1300,19 @@ const Store = (() => {
       cart[index].qty = qty;
     }
     write(KEYS.cart, cart);
-    emit();
+    emit("cart");
   };
 
   const removeFromCart = (index) => {
     const cart = getCart();
     cart.splice(index, 1);
     write(KEYS.cart, cart);
-    emit();
+    emit("cart");
   };
 
   const clearCart = () => {
     write(KEYS.cart, []);
-    emit();
+    emit("cart");
   };
 
   const cartCount = () => getCart().reduce((n, c) => n + c.qty, 0);
@@ -1302,7 +1335,7 @@ const Store = (() => {
     if (isNowFav) favs.push(id);
     else favs.splice(i, 1);
     write(KEYS.favorites, favs);
-    emit();
+    emit("favorites");
 
     // Sincronizar inmediatamente la lista de favoritos de este dispositivo a la nube
     const devId = getDeviceId();
