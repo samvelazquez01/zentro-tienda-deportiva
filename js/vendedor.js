@@ -593,7 +593,7 @@
       switchTab("products");
     });
 
-    // 4. Subida y compresión de fotos (máximo 3)
+    // 4. Subida y almacenamiento de fotos en la nube (ImgBB)
     $("#seller-img-input")?.addEventListener("change", async (e) => {
       const files = [...(e.target.files || [])];
       if (!files.length) return;
@@ -606,14 +606,18 @@
       }
 
       const toProcess = files.slice(0, availableSlots);
-      toast("Comprimiendo fotos...");
+      toast("Subiendo foto a la nube de ImgBB...");
 
       for (const file of toProcess) {
         try {
           const dataUrl = await compressImage(file);
-          addImage(dataUrl);
+          const cloudUrl = await Store.uploadImage(dataUrl);
+          addImage(cloudUrl);
+          toast("✓ Foto subida exitosamente");
         } catch (err) {
-          console.error("Error al comprimir foto:", err);
+          console.error("Error al subir foto:", err);
+          const fallback = await compressImage(file);
+          addImage(fallback);
         }
       }
 

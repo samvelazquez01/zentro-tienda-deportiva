@@ -756,6 +756,7 @@
       if ($("#setting-bank-details")) $("#setting-bank-details").value = st.bankDetails || "";
       if ($("#setting-reminder-template")) $("#setting-reminder-template").value = st.reminderTemplate || "";
       if ($("#setting-return-policy")) $("#setting-return-policy").value = st.returnPolicy || "";
+      if ($("#setting-imgbb-key")) $("#setting-imgbb-key").value = st.imgbbApiKey || "9a5a6c1fc75a40fa95a63eb277092d21";
     },
   };
 
@@ -998,12 +999,21 @@
       e.target.value = "";
       return;
     }
-    toast("Comprimiendo fotos...");
+    toast("Subiendo a la nube de ImgBB...");
     for (const file of files.slice(0, remaining)) {
-      const dataUrl = await compressImage(file);
-      currentImages.push(dataUrl);
+      try {
+        const compressed = await compressImage(file);
+        const cloudUrl = await Store.uploadImage(compressed);
+        currentImages.push(cloudUrl);
+        renderImgPreviews();
+        toast("✓ Foto subida exitosamente");
+      } catch (err) {
+        console.error("Error al subir foto:", err);
+        const fallback = await compressImage(file);
+        currentImages.push(fallback);
+        renderImgPreviews();
+      }
     }
-    renderImgPreviews();
     e.target.value = "";
   });
 
@@ -1379,6 +1389,14 @@
     const reminderTemplate = ($("#setting-reminder-template")?.value || "").trim();
     Store.saveSettings({ bankDetails, reminderTemplate });
     toast("✅ ¡Cuentas bancarias y plantilla de WhatsApp guardadas!");
+  });
+
+  /* Formulario clave API de ImgBB */
+  $("#admin-imgbb-form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = ($("#setting-imgbb-key")?.value || "").trim();
+    Store.saveSettings({ imgbbApiKey: key });
+    toast("✅ ¡Clave de ImgBB actualizada!");
   });
 
   /* Botones de cerrar sesión y cambio de PIN */

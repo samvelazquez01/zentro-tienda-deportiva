@@ -33,6 +33,7 @@ const Store = (() => {
     welcomeMsg: "¡Hola! Quiero hacer el siguiente pedido en ZENTRO:",
     reminderTemplate: "¡Hola [NOMBRE]! Te recordamos desde ZENTRO que el pago de suscripción de tu tienda vence el [FECHA].\n\nTu plan contratado: [PLAN] ([PRECIO]).\n\nPara renovar tu servicio y mantener visibles tus artículos en el catálogo público, realiza tu pago a nuestras cuentas bancarias:\n\n[CUENTAS]\n\nFavor enviar comprobante por este chat. ¡Muchas gracias!",
     returnPolicy: "• Tienes un plazo de 7 días a partir de la entrega para solicitar cambio de talla o garantía por desperfecto de fábrica.\n• El calzado o prenda deportiva debe estar sin uso, en su caja/empaque original y con todas sus etiquetas.\n• Los cambios por talla están sujetos a disponibilidad en el inventario.\n• Para iniciar un cambio o devolución, escríbenos directamente a nuestro WhatsApp con tu número de pedido (#ORD-XXXX).",
+    imgbbApiKey: "9a5a6c1fc75a40fa95a63eb277092d21",
   };
 
   const DEFAULT_SELLERS = [
@@ -1543,6 +1544,38 @@ const Store = (() => {
     }
   };
 
+  /* ---------------- SUBIDA AUTOMÁTICA DE IMÁGENES A IMGBB (GRATIS & ILIMITADO) ---------------- */
+  const IMGBB_API_KEY = "9a5a6c1fc75a40fa95a63eb277092d21";
+
+  const uploadImage = async (fileOrDataUrl) => {
+    try {
+      const apiKey = getSettings().imgbbApiKey || IMGBB_API_KEY;
+      const formData = new FormData();
+      formData.append("key", apiKey);
+
+      if (typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:")) {
+        const pureBase64 = fileOrDataUrl.split(",")[1] || fileOrDataUrl;
+        formData.append("image", pureBase64);
+      } else {
+        formData.append("image", fileOrDataUrl);
+      }
+
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json && json.success && json.data && (json.data.display_url || json.data.url)) {
+        return json.data.display_url || json.data.url;
+      }
+      throw new Error(json?.error?.message || "Error al subir a ImgBB");
+    } catch (err) {
+      console.warn("Aviso al subir imagen a ImgBB:", err);
+      return fileOrDataUrl;
+    }
+  };
+
   // Inicializar local
   seed();
 
@@ -1603,6 +1636,7 @@ const Store = (() => {
     recordFavoriteClick,
     getRatings,
     submitVerifiedRating,
+    uploadImage,
     exportDataJSON,
     importDataJSON,
     syncAllToFirebase,
